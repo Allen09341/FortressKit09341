@@ -207,10 +207,33 @@
 
     /* Slot Inventory Modal */
     .slot-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 999; }
-    .slot-modal-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; width: 440px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
-    .slot-grid-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 14px 0; }
-    .slot-chk-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.78rem; }
+    .slot-modal-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px; width: 480px; max-width: 92vw; max-height: 82vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+    .slot-grid-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0; }
+    
+    .slot-chk-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; transition: all 0.15s; }
     .slot-chk-item.checked { border-color: var(--color-slt); background: rgba(30, 144, 255, 0.12); }
+    .slot-chk-item input[type="checkbox"] { transform: scale(1.1); margin: 0 2px; cursor: pointer; flex-shrink: 0; }
+
+    .slot-item-icon { width: 32px; height: 32px; object-fit: contain; pointer-events: none; background: var(--bg-cell-locked); border-radius: 4px; border: 1px solid #30363d; flex-shrink: 0; }
+    
+    /* 零件資訊容器：兩層結構 */
+    .slot-item-info { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; flex: 1; pointer-events: none; }
+    
+    /* 第一層：零件名稱 */
+    .slot-item-name { font-size: 0.76rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+    
+    /* 第二層：稀有度與階數 */
+    .slot-item-meta { display: flex; align-items: center; gap: 4px; line-height: 1; }
+    .slot-rarity-badge { font-size: 0.65rem; padding: 1px 4px; border-radius: 3px; font-weight: 700; }
+    .slot-rarity-legend { color: var(--rarity-legend); border: 1px solid rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.12); }
+    .slot-rarity-unique { color: var(--rarity-unique); border: 1px solid rgba(0, 229, 255, 0.4); background: rgba(0, 229, 255, 0.12); }
+    .slot-boost-text { color: var(--text-dim); font-size: 0.7rem; font-weight: 600; }
+
+    /* --- Styles for Pointer Events Dragging --- */
+    .dragging-clone { position: fixed; pointer-events: none; z-index: 10001; opacity: 0.8; transform: translate(-50%, -50%); transition: none; background: var(--bg-card); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+    .dragging-source { opacity: 0.3; transition: opacity 0.2s; }
+    .no-select { user-select: none; -webkit-user-select: none; }
+
   </style>
 </head>
 <body>
@@ -365,6 +388,107 @@
   </div>
 
   <script>
+    // --- Pointer Events Touch Drag State & Logic ---
+    let pointerDragState = {
+      isPointerDown: false,
+      isDragging: false,
+      dragElement: null,
+      draggedData: null,
+      startX: 0,
+      startY: 0,
+      dx: 0,
+      dy: 0,
+      pressTimeout: null,
+      sourceElement: null
+    };
+
+    function handlePointerDown(e, partData, fromType, fromIndex = -1) {
+      if (e.pointerType === 'mouse') return;
+      e.preventDefault();
+      pointerDragState.isPointerDown = true;
+      pointerDragState.startX = e.clientX;
+      pointerDragState.startY = e.clientY;
+      pointerDragState.draggedData = { type: fromType, id: partData.id, fromIndex: fromIndex };
+      pointerDragState.sourceElement = e.currentTarget;
+      pointerDragState.pressTimeout = setTimeout(() => {
+        if (pointerDragState.isPointerDown) startPointerDrag(e);
+      }, 150);
+    }
+
+    function startPointerDrag(e) {
+        if (!pointerDragState.isPointerDown || pointerDragState.isDragging) return;
+        const dist = Math.sqrt(Math.pow(e.clientX - pointerDragState.startX, 2) + Math.pow(e.clientY - pointerDragState.startY, 2));
+        if (dist < 10) return;
+        pointerDragState.isDragging = true;
+        document.body.classList.add('no-select');
+        if (pointerDragState.sourceElement) {
+            pointerDragState.sourceElement.classList.add('dragging-source');
+        }
+        const clone = pointerDragState.sourceElement.cloneNode(true);
+        clone.classList.add('dragging-clone');
+        clone.id = ''; 
+        document.body.appendChild(clone);
+        pointerDragState.dragElement = clone;
+        handlePointerMove(e);
+    }
+
+    function handlePointerMove(e) {
+      if (!pointerDragState.isPointerDown) return;
+      if (!pointerDragState.isDragging) {
+          startPointerDrag(e);
+      }
+      if (pointerDragState.isDragging && pointerDragState.dragElement) {
+        pointerDragState.dragElement.style.left = `${e.clientX}px`;
+        pointerDragState.dragElement.style.top = `${e.clientY}px`;
+        clearDragHovers();
+        const targetCell = document.elementFromPoint(e.clientX, e.clientY)?.closest('.cell');
+        if (targetCell && !targetCell.classList.contains('locked')) {
+          targetCell.classList.add('drag-target-hover');
+        }
+      }
+    }
+
+    function handlePointerUp(e) {
+      clearTimeout(pointerDragState.pressTimeout);
+      if (pointerDragState.isDragging) {
+        const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+        const cellElement = dropTarget?.closest('.cell:not(.locked)');
+        const libraryElement = dropTarget?.closest('#libraryDropZone');
+        
+        if (cellElement) {
+          const targetIndex = parseInt(cellElement.dataset.index, 10);
+          const mockEvent = {
+            dataTransfer: { getData: () => JSON.stringify(pointerDragState.draggedData) },
+            preventDefault: () => {}
+          };
+          window.currentDragState = pointerDragState.draggedData;
+          handleDropOnCell(mockEvent, targetIndex);
+          window.currentDragState = null;
+        } else if (libraryElement && pointerDragState.draggedData.type === 'GRID') {
+            const fromIdx = pointerDragState.draggedData.fromIndex;
+            if(fromIdx !== -1) {
+                boardParts[fromIdx] = null;
+                renderLibrary();
+                renderGrid();
+                showToast("🗑️ 零件已拖回零件庫移除", "normal");
+            }
+        }
+        if (pointerDragState.dragElement) {
+          pointerDragState.dragElement.remove();
+        }
+        clearDragHovers();
+      }
+      if (pointerDragState.sourceElement) {
+        pointerDragState.sourceElement.classList.remove('dragging-source');
+      }
+      document.body.classList.remove('no-select');
+      pointerDragState = { isPointerDown: false, isDragging: false, dragElement: null, draggedData: null, startX: 0, startY: 0, dx: 0, dy: 0, pressTimeout: null, sourceElement: null };
+    }
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    // --- Pointer Events Touch Drag Logic (END) ---
+
     // 44 Parts Database
     const PARTS_DATA = [
       { id: "A01", cat: "A", name: "動力增幅器", effect: "攻擊力 +", maxT: [7,5,3,1], base: [[30,45],[20,30],[15,20],[5,10]], step: 10 },
@@ -500,19 +624,34 @@
     function buildSlotInventoryUI() {
       const list = document.getElementById('slotCheckboxList');
       list.innerHTML = '';
+
       PARTS_DATA.filter(p => p.cat === 'E').forEach(s => {
-        const item = document.createElement('div');
         const isChecked = ownedSlotIds.has(s.id);
+        const item = document.createElement('div');
         item.className = `slot-chk-item ${isChecked ? 'checked' : ''}`;
+        
+        item.onclick = () => {
+          const chk = item.querySelector('input[type="checkbox"]');
+          chk.checked = !chk.checked;
+          toggleSlotOwned(s.id, chk.checked, item);
+        };
+
+        const rarityClass = s.rarity === '傳說' ? 'slot-rarity-legend' : 'slot-rarity-unique';
+
         item.innerHTML = `
-          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSlotOwned('${s.id}', this.checked, this.parentElement)">
-          <div>
-            <b>${s.name}</b>
-            <div style="color:var(--text-dim); font-size:0.7rem;">+${s.boost}階 (${s.rarity})</div>
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="event.stopPropagation(); toggleSlotOwned('${s.id}', this.checked, this.parentElement)">
+          <img src="${s.id}_${s.name}.png" class="slot-item-icon" draggable="false" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\\'slot-item-icon\\'></div>'); this.remove();">
+          <div class="slot-item-info">
+            <div class="slot-item-name">${s.name}</div>
+            <div class="slot-item-meta">
+              <span class="slot-rarity-badge ${rarityClass}">${s.rarity}</span>
+              <span class="slot-boost-text">+${s.boost}階</span>
+            </div>
           </div>
         `;
         list.appendChild(item);
       });
+
       document.getElementById('slotCountBadge').innerText = ownedSlotIds.size;
     }
     function toggleSlotOwned(id, checked, el) {
@@ -564,6 +703,11 @@
         
         if (!isPlaced) {
           item.setAttribute('draggable', 'true');
+          item.style.touchAction = 'none';
+          item.onpointerdown = (e) => {
+            if (isPlaced) return;
+            handlePointerDown(e, p, 'LIB');
+          };
           item.ondragstart = (e) => {
             window.currentDragState = { type: 'LIB', id: p.id };
             e.dataTransfer.setData('text/plain', JSON.stringify(window.currentDragState));
@@ -685,6 +829,7 @@
             const partEl = document.createElement('div');
             partEl.className = `cell-part bg-cat-${partInfo.cat}`;
             partEl.setAttribute('draggable', 'true');
+            partEl.style.touchAction = 'none';
             
             partEl.ondragstart = (e) => {
               window.currentDragState = { type: 'GRID', fromIndex: i, id: pData.id };
@@ -694,6 +839,9 @@
             partEl.ondragend = () => {
               window.currentDragState = null;
               clearDragHovers();
+            };
+            partEl.onpointerdown = (e) => {
+              handlePointerDown(e, pData, 'GRID', i);
             };
             
             if (partInfo.cat === 'E') {
