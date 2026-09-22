@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FortressKit｜零件配置編輯器</title>
+  <style>
+    :root {
+      --bg-main: #141619;
+      --bg-panel: #1e2227;
+      --bg-card: #272c34;
+      --bg-cell-locked: #16181b;
+      --bg-cell-empty: #21262d;
+      --border-color: #383f4a;
+      --text-main: #ffffff;
+      --text-dim: #8b949e;
+      --accent-title: #f5eedc;
+      
+      /* Category Colors */
+      --color-atk: #ff8c00;
+      --color-def: #00ced1;
+      --color-sup: #ffd700;
+      --color-deb: #ff4d4f;
+      --color-slt: #1e90ff;
+
+      /* Tier Colors */
+      --color-green: #2ecc71;
+      --color-red: #e74c3c;
+      --color-gold: #f1c40f;
+
+      /* Rarity Colors */
+      --rarity-legend: #ffd700;
+      --rarity-epic: #d63384;
+      --rarity-unique: #00e5ff;
+      --rarity-rare: #2ecc71;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { background-color: var(--bg-main); color: #e6edf3; min-height: 100vh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+    
+    /* Header */
+    header { background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
+    .title-group h1 { color: var(--accent-title); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
+    .title-group p { color: var(--text-dim); font-size: 0.75rem; margin-top: 2px; }
+    .header-actions { display: flex; gap: 8px; }
+    .btn { background: #30363d; color: #fff; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+    .btn:hover { background: #3c444d; border-color: #8b949e; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-opt { background: #238636; border-color: #2ea043; font-weight: 600; }
+    .btn-opt:hover:not(:disabled) { background: #2ea043; box-shadow: 0 0 8px rgba(46, 160, 67, 0.4); }
+    .btn-danger { background: #b62324; border-color: #d83a52; font-weight: 600; }
+    .btn-danger:hover { background: #d83a52; }
+
+    /* App Main Layout */
+    .app-body { display: grid; grid-template-columns: 320px 1fr 350px; min-height: calc(100vh - 56px); flex: 1; }
+
+    /* Left Panel - Library */
+    .library-panel { background: var(--bg-panel); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; height: 100%; min-height: 800px; }
+    .lib-tabs { display: grid; grid-template-columns: repeat(6, 1fr); padding: 8px; gap: 4px; border-bottom: 1px solid var(--border-color); position: sticky; top: 56px; background: var(--bg-panel); z-index: 10; }
+    .tab-btn { background: var(--bg-card); border: 1px solid transparent; color: var(--text-dim); font-size: 0.75rem; padding: 6px 0; border-radius: 4px; cursor: pointer; text-align: center; }
+    .tab-btn.active { color: #fff; font-weight: 600; border-color: var(--border-color); background: #30363d; }
+    .lib-list { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+
+    /* Part Cards in Library */
+    .part-item { background: var(--bg-card); border: 1px solid var(--border-color); border-left-width: 4px !important; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: grab; user-select: none; transition: transform 0.1s, opacity 0.2s; position: relative; }
+    .part-item:active { cursor: grabbing; }
+    .part-item.accent-A { border-left-color: var(--color-atk) !important; }
+    .part-item.accent-B { border-left-color: var(--color-def) !important; }
+    .part-item.accent-C { border-left-color: var(--color-sup) !important; }
+    .part-item.accent-D { border-left-color: var(--color-deb) !important; }
+    .part-item.accent-E { border-left-color: var(--color-slt) !important; }
+
+    .part-item:hover { transform: translateX(2px); border-color: #58a6ff; }
+    .part-item.placed { opacity: 0.45; filter: grayscale(0.3); cursor: pointer !important; }
+    
+    .part-item-icon { width: 38px; height: 38px; border-radius: 4px; background: #161b22; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; flex-shrink: 0; overflow: hidden; border: 1px solid #30363d; pointer-events: none; }
+    .part-item-icon img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+    .part-item-info { flex: 1; min-width: 0; pointer-events: none; }
+    .part-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+    .part-item-name { font-size: 0.85rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    
+    .badge-group { display: flex; gap: 4px; align-items: center; }
+    .badge { font-size: 0.65rem; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
+    .badge-legend { color: var(--rarity-legend); border: 1px solid rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.12); }
+    .badge-epic { color: var(--rarity-epic); border: 1px solid rgba(214, 51, 132, 0.4); background: rgba(214, 51, 132, 0.12); }
+    .badge-unique { color: var(--rarity-unique); border: 1px solid rgba(0, 229, 255, 0.4); background: rgba(0, 229, 255, 0.12); }
+    .badge-rare { color: var(--rarity-rare); border: 1px solid rgba(46, 204, 113, 0.4); background: rgba(46, 204, 113, 0.12); }
+    
+    .part-item-effect { font-size: 0.73rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Priority Star on Card */
+    .priority-star-btn { font-size: 1rem; color: #484f58; cursor: pointer; transition: all 0.2s; padding: 2px; z-index: 5; }
+    .priority-star-btn:hover { color: #ffd700; transform: scale(1.2); }
+    .priority-star-btn.active { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.8); }
+
+    /* Center Panel - Fixed Grid & Realtime Synergy */
+    .grid-panel { display: flex; flex-direction: column; align-items: center; padding: 16px; background: #101215; }
+    .board-wrapper { display: flex; flex-direction: column; align-items: center; width: 440px; }
+    
+    /* Optimization Constraints Controls */
+    .constraint-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; width: 100%; margin-bottom: 12px; font-size: 0.78rem; display: flex; flex-direction: column; gap: 6px; }
+    .constraint-row { display: flex; align-items: center; justify-content: space-between; }
+    .constraint-items { display: flex; gap: 8px; }
+    .constraint-item { display: flex; align-items: center; gap: 3px; font-weight: 600; }
+    
+    .constraint-select { background: #161b22; color: var(--text-dim); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 4px; font-size: 0.75rem; cursor: pointer; outline: none; transition: all 0.25s; }
+    
+    .constraint-select.active-A { color: var(--color-atk) !important; border-color: var(--color-atk) !important; background: rgba(255, 140, 0, 0.15) !important; box-shadow: 0 0 6px rgba(255, 140, 0, 0.4); font-weight: bold; }
+    .constraint-select.active-B { color: var(--color-def) !important; border-color: var(--color-def) !important; background: rgba(0, 206, 209, 0.15) !important; box-shadow: 0 0 6px rgba(0, 206, 209, 0.4); font-weight: bold; }
+    .constraint-select.active-C { color: var(--color-sup) !important; border-color: var(--color-sup) !important; background: rgba(255, 215, 0, 0.15) !important; box-shadow: 0 0 6px rgba(255, 215, 0, 0.4); font-weight: bold; }
+    .constraint-select.active-D { color: var(--color-deb) !important; border-color: var(--color-deb) !important; background: rgba(255, 77, 79, 0.15) !important; box-shadow: 0 0 6px rgba(255, 77, 79, 0.4); font-weight: bold; }
+
+    /* Grid Board */
+    .grid-board-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; }
+    .grid-board { display: grid; grid-template-columns: repeat(5, 80px); grid-template-rows: repeat(5, 80px); gap: 8px; background: #161b22; padding: 12px; border-radius: 12px; border: 2px solid #30363d; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    
+    .cell { background: var(--bg-cell-empty); border: 2px dashed #30363d; border-radius: 8px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; user-select: none; }
+    .cell.locked { background: var(--bg-cell-locked); border: 2px dashed #21262d; }
+    .cell.locked::after { content: "🔒"; font-size: 1.1rem; opacity: 0.3; pointer-events: none; }
+    .cell.locked:hover { border-color: #8b949e; background: #1f242c; }
+    
+    .cell.drag-target-hover { border-color: #58a6ff !important; background: rgba(88, 166, 255, 0.2) !important; box-shadow: 0 0 10px rgba(88, 166, 255, 0.5); }
+    .cell.highlight-target { background: rgba(30, 144, 255, 0.25) !important; border: 2px solid #58a6ff !important; box-shadow: 0 0 10px rgba(30, 144, 255, 0.5); }
+    .cell.highlight-target::before { content: attr(data-boost-text); position: absolute; bottom: 2px; right: 4px; font-size: 0.68rem; font-weight: bold; color: #58a6ff; z-index: 5; text-shadow: 0 0 4px #000; pointer-events: none; }
+    .cell.selected { border-color: #f1c40f !important; box-shadow: 0 0 8px rgba(241, 196, 15, 0.4); }
+
+    /* Part inside Grid Cell */
+    .cell-part { width: 100%; height: 100%; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; position: relative; cursor: grab; background: var(--bg-card); border: 2px solid transparent; }
+    .cell-part:active { cursor: grabbing; }
+    .cell-part-img { width: 44px; height: 44px; object-fit: contain; pointer-events: none; }
+    .cell-part-name { font-size: 0.68rem; font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 72px; margin-top: 2px; pointer-events: none; }
+    
+    .cell-part-tier { position: absolute; top: 3px; left: 4px; font-size: 0.72rem; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.9); line-height: 1; z-index: 2; pointer-events: none; }
+    .cell-part-pin { position: absolute; top: 2px; right: 2px; font-size: 0.75rem; z-index: 3; pointer-events: none; }
+    .cell-part-star { position: absolute; top: 2px; right: 18px; font-size: 0.75rem; color: #ffd700; z-index: 3; pointer-events: none; text-shadow: 0 0 4px #000; }
+
+    /* Grid Sub-Controls & Hint */
+    .board-hint-box { font-size: 0.76rem; color: var(--text-dim); margin-top: 10px; text-align: center; line-height: 1.4; background: rgba(255,255,255,0.03); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); width: 100%; letter-spacing: 0.3px; }
+
+    /* Real-time Synergy Effect Card */
+    .synergy-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; width: 100%; margin-top: 12px; }
+    .synergy-card-title { font-size: 0.82rem; font-weight: 700; color: var(--accent-title); margin-bottom: 8px; }
+    .synergy-tags-container { display: flex; flex-wrap: wrap; gap: 8px; min-height: 28px; align-items: center; }
+    .synergy-tag { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 4px; }
+    .synergy-tag-A { color: var(--color-atk); background: rgba(255, 140, 0, 0.12); border-color: rgba(255, 140, 0, 0.3); }
+    .synergy-tag-B { color: var(--color-def); background: rgba(0, 206, 209, 0.12); border-color: rgba(0, 206, 209, 0.3); }
+    .synergy-tag-C { color: var(--color-sup); background: rgba(255, 215, 0, 0.12); border-color: rgba(255, 215, 0, 0.3); }
+    .synergy-tag-D { color: var(--color-deb); background: rgba(255, 77, 79, 0.12); border-color: rgba(255, 77, 79, 0.3); }
+
+    /* Right Panel - Inspector & Score Breakdown */
+    .inspector-panel { background: var(--bg-panel); border-left: 1px solid var(--border-color); padding: 16px; display: flex; flex-direction: column; gap: 12px; height: 100%; min-height: 800px; }
+    .panel-title { font-size: 0.95rem; font-weight: 700; color: var(--accent-title); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+    .inspector-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
+    .detail-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.84rem; }
+    .detail-row:last-child { margin-bottom: 0; }
+    .detail-label { color: var(--text-dim); }
+    .detail-val { font-weight: 600; }
+    
+    /* Objective Score Board Widget */
+    .score-board { background: linear-gradient(135deg, #1f242d, #161b22); border: 1px solid #388bfd; border-radius: 8px; padding: 12px; margin-bottom: 4px; }
+    .score-main-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .score-points { font-size: 1.45rem; font-weight: 800; color: #58a6ff; text-shadow: 0 0 10px rgba(88, 166, 255, 0.4); }
+    .score-tier-badge { font-size: 0.72rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+    .score-bar-bg { width: 100%; height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+    .score-bar-val { height: 100%; background: linear-gradient(90deg, #1f6feb, #2ea043); width: 0%; transition: width 0.3s; }
+    .score-subgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.74rem; }
+
+    /* Rarity Selector Pills */
+    .rarity-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 8px 0; }
+    .rarity-pill { background: #161b22; border: 1px solid var(--border-color); color: var(--text-dim); padding: 5px 0; font-size: 0.72rem; font-weight: 600; border-radius: 4px; cursor: pointer; text-align: center; transition: all 0.15s; }
+    .rarity-pill.active-0 { border-color: var(--rarity-legend); color: var(--rarity-legend); background: rgba(255,215,0,0.12); }
+    .rarity-pill.active-1 { border-color: var(--rarity-epic); color: var(--rarity-epic); background: rgba(214,51,132,0.12); }
+    .rarity-pill.active-2 { border-color: var(--rarity-unique); color: var(--rarity-unique); background: rgba(0,229,255,0.12); }
+    .rarity-pill.active-3 { border-color: var(--rarity-rare); color: var(--rarity-rare); background: rgba(46,204,113,0.12); }
+
+    /* Category Colors */
+    .cat-A { color: var(--color-atk); }
+    .cat-B { color: var(--color-def); }
+    .cat-C { color: var(--color-sup); }
+    .cat-D { color: var(--color-deb); }
+    .cat-E { color: var(--color-slt); }
+    .bg-cat-A { background: rgba(255, 140, 0, 0.15); }
+    .bg-cat-B { background: rgba(0, 206, 209, 0.15); }
+    .bg-cat-C { background: rgba(255, 215, 0, 0.15); }
+    .bg-cat-D { background: rgba(255, 77, 79, 0.15); }
+    .bg-cat-E { background: rgba(30, 144, 255, 0.15); }
+
+    .tier-green { color: var(--color-green); }
+    .tier-red { color: var(--color-red); }
+
+    /* Toast Notification */
+    .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-50px); background: #1f6feb; color: #fff; padding: 9px 22px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.7); opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); z-index: 9999; max-width: 90vw; text-align: center; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.toast-success { background: #238636; border: 1px solid #2ea043; }
+    .toast.toast-error { background: #b62324; border: 1px solid #d83a52; }
+    .toast.toast-normal { background: #30363d; border: 1px solid #484f58; }
+
+    /* Progress Overlay Modal */
+    .progress-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .progress-overlay.show { opacity: 1; pointer-events: auto; }
+    .progress-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px 32px; width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .progress-title { font-size: 1rem; font-weight: 700; color: var(--accent-title); margin-bottom: 6px; }
+    .progress-status-text { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 16px; }
+    .progress-bar-track { width: 100%; height: 10px; background: #161b22; border-radius: 5px; overflow: hidden; border: 1px solid var(--border-color); margin-bottom: 10px; }
+    .progress-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #1f6feb, #2ea043); transition: width 0.08s linear; }
+    .progress-percent-label { font-size: 0.82rem; font-weight: 700; color: #58a6ff; }
+
+    /* Slot Inventory Modal */
+    .slot-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 999; }
+    .slot-modal-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; width: 440px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
+    .slot-grid-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 14px 0; }
+    .slot-chk-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.78rem; }
+    .slot-chk-item.checked { border-color: var(--color-slt); background: rgba(30, 144, 255, 0.12); }
+  </style>
+</head>
+<body>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Optimization Progress Modal -->
+  <div id="progressOverlay" class="progress-overlay">
+    <div class="progress-card">
+      <div class="progress-title">⚡ 正在進行 FortressKit 雙層拓撲求解...</div>
+      <div class="progress-status-text" id="progressStatusText">評估幾何插槽與連通路徑 (0 / 50,000)</div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+      <div class="progress-percent-label" id="progressPercentLabel">0%</div>
+    </div>
+  </div>
+
+  <!-- Slot Inventory Modal -->
+  <div id="slotInventoryModal" class="slot-modal-overlay">
+    <div class="slot-modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="font-size:1rem; color:var(--accent-title);">🔌 可用插槽零件庫存設定</h3>
+        <button class="btn" onclick="closeSlotModal()">✕</button>
+      </div>
+      <p style="font-size:0.75rem; color:var(--text-dim);">勾選您擁有的插槽零件。優化時演算法將自動從這些庫存中挑選最佳插槽填滿剩餘空格：</p>
+      <div class="slot-grid-select" id="slotCheckboxList"></div>
+      <div style="display:flex; justify-content:space-between; margin-top:14px;">
+        <button class="btn" onclick="toggleAllSlots(true)">全選</button>
+        <button class="btn" onclick="toggleAllSlots(false)">全不選</button>
+        <button class="btn btn-primary" onclick="closeSlotModal()">確定儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="title-group">
+      <h1>FortressKit｜零件配置編輯器</h1>
+      <p>解鎖格子・拖曳零件・增幅階段・快速連結・一鍵優化</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="openSlotModal()">🔌 插槽庫存 (<span id="slotCountBadge">16</span>)</button>
+      <button class="btn" onclick="exportConfig()">📋 匯出配置</button>
+      <button class="btn" onclick="importConfig()">📥 匯入配置</button>
+      <button class="btn btn-opt" id="btnOptimize" onclick="startOptimization()">⚡ 優化</button>
+      <button class="btn btn-danger" onclick="clearBoard()">🗑️ 清空</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <!-- Left: Part Library (Drop zone to remove parts) -->
+    <div class="library-panel" id="libraryDropZone">
+      <div class="lib-tabs">
+        <button class="tab-btn active" onclick="filterCategory('ALL')">全部</button>
+        <button class="tab-btn" onclick="filterCategory('A')">攻擊</button>
+        <button class="tab-btn" onclick="filterCategory('B')">防禦</button>
+        <button class="tab-btn" onclick="filterCategory('C')">輔助</button>
+        <button class="tab-btn" onclick="filterCategory('D')">弱化</button>
+        <button class="tab-btn" onclick="filterCategory('E')">插槽</button>
+      </div>
+      <div class="lib-list" id="libList"></div>
+    </div>
+
+    <!-- Center: Fixed 5x5 Grid Board & Real-time Synergy -->
+    <div class="grid-panel">
+      <div class="board-wrapper">
+        
+        <!-- Optimization Hard/Soft Targets Box -->
+        <div class="constraint-box">
+          <div class="constraint-row">
+            <span style="color:var(--text-dim);">🎯 連結數目標：</span>
+            <div class="constraint-items">
+              <div class="constraint-item cat-A">攻 <select id="limit_A" class="constraint-select" onchange="updateSelectVisual(this, 'A')"><option value="0">0</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+              <div class="constraint-item cat-B">防 <select id="limit_B" class="constraint-select" onchange="updateSelectVisual(this, 'B')"><option value="0">0</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+              <div class="constraint-item cat-C">輔 <select id="limit_C" class="constraint-select" onchange="updateSelectVisual(this, 'C')"><option value="0">0</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+              <div class="constraint-item cat-D">弱 <select id="limit_D" class="constraint-select" onchange="updateSelectVisual(this, 'D')"><option value="0">0</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+            </div>
+          </div>
+          <div class="constraint-row">
+            <span style="color:var(--text-dim);">⭐ 滿階段目標：</span>
+            <div class="constraint-items">
+              <div class="constraint-item cat-A">攻 <select id="full_A" class="constraint-select" onchange="updateSelectVisual(this, 'A')"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+              <div class="constraint-item cat-B">防 <select id="full_B" class="constraint-select" onchange="updateSelectVisual(this, 'B')"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+              <div class="constraint-item cat-C">輔 <select id="full_C" class="constraint-select" onchange="updateSelectVisual(this, 'C')"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+              <div class="constraint-item cat-D">弱 <select id="full_D" class="constraint-select" onchange="updateSelectVisual(this, 'D')"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Board Header with Unlock All -->
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:8px;">
+          <span style="font-size:0.82rem; font-weight:700; color:var(--accent-title);">機械插槽</span>
+          <button class="btn" style="padding:3px 8px; font-size:0.75rem;" onclick="unlockAllGrid()">🔓 全開 5×5</button>
+        </div>
+
+        <!-- 5x5 Grid Board -->
+        <div class="grid-board-container">
+          <div class="grid-board" id="gridBoard"></div>
+        </div>
+
+        <!-- Refined Hints -->
+        <div class="board-hint-box">
+          點擊解鎖 ｜ ⭐ 標記優先滿階 ｜ 點選放置/收回 ｜ 拖曳交換 ｜ 雙擊移除
+        </div>
+
+        <!-- Real-time Synergy Effect Display -->
+        <div class="synergy-card">
+          <div class="synergy-card-title">🔗 連接效果</div>
+          <div class="synergy-tags-container" id="synergyContainer">
+            <span style="color:var(--text-dim); font-size:0.75rem;">目前盤面無同屬性相鄰連線加成</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right: Inspector & Score Breakdown -->
+    <div class="inspector-panel">
+      
+      <!-- Objective Score Board Widget -->
+      <div class="score-board" id="scoreBoardWidget">
+        <div class="score-main-row">
+          <div>
+            <span style="font-size:0.85rem; font-weight:700; color:#fff;">🏆 盤面實際評分</span>
+            <span id="scoreTierBadge" class="score-tier-badge" style="background:#ffd700; color:#000; margin-left:4px;">SSS</span>
+          </div>
+          <span class="score-points" id="scoreValue">0.0 分</span>
+        </div>
+        <div class="score-bar-bg">
+          <div class="score-bar-val" id="scoreBarFill"></div>
+        </div>
+        <div class="score-subgrid">
+          <div>📈 階段達成：<b id="scEffRatio" style="color:#2ecc71;">0/40</b></div>
+          <div>🔗 連線增益：<b id="scSynRatio" style="color:#58a6ff;">0/40</b></div>
+          <div>⚡ 插槽利用：<b id="scSlotRatio" style="color:#ffd700;">0/20</b></div>
+          <div>⚠️ 插槽浪費：<b id="scWasteTiers" style="color:#e74c3c;">0 階</b></div>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-dim); margin-top:6px; border-top:1px dashed var(--border-color); padding-top:4px;">
+          ⭐ 優先主力滿階：<b id="scPrioMax" style="color:#ffd700;">0/0</b>
+        </div>
+      </div>
+
+      <div class="panel-title">⚙️ 零件設定與即時數值</div>
+      <div id="inspectorContent">
+        <div style="color:var(--text-dim); font-size:0.85rem; text-align:center; padding: 40px 0;">
+          請點選盤面或零件庫中的零件以查看詳細數值與加成明細
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 44 Parts Database
+    const PARTS_DATA = [
+      { id: "A01", cat: "A", name: "動力增幅器", effect: "攻擊力 +", maxT: [7,5,3,1], base: [[30,45],[20,30],[15,20],[5,10]], step: 10 },
+      { id: "A02", cat: "A", name: "時脈加速器", effect: "攻擊速度 +", maxT: [7,5,3,1], base: [[10,15],[5,10],[2.5,5],[1,2.5]], step: 5 },
+      { id: "A03", cat: "A", name: "軌跡預測器", effect: "暴擊率 +", maxT: [7,5,3,1], base: [[10,15],[5,10],[2.5,5],[1,2.5]], step: 5 },
+      { id: "A04", cat: "A", name: "衝擊增幅器", effect: "暴擊傷害量 +", maxT: [7,5,3,1], base: [[30,45],[20,30],[15,20],[5,10]], step: 10 },
+      { id: "A05", cat: "A", name: "電力聚集器", effect: "造成的傷害量 +", maxT: [7,5,3,1], base: [[15,20],[10,15],[5,10],[2.5,5]], step: 5 },
+      { id: "A06", cat: "A", name: "功能增幅器", effect: "技能效果 +", maxT: [7,5,3,1], base: [[10,15],[5,10],[2.5,5],[1,2.5]], step: 5 },
+      { id: "A07", cat: "A", name: "巨體解析器", effect: "對魔王造成的傷害量 +", maxT: [7,5,3,1], base: [[35,60],[25,35],[15,25],[5,10]], step: 10 },
+      { id: "B01", cat: "B", name: "防護控制器", effect: "防禦力 +", maxT: [7,5,3,1], base: [[60,85],[40,60],[25,40],[10,15]], step: 15 },
+      { id: "B02", cat: "B", name: "生命維持器", effect: "最大體力 +", maxT: [7,5,3,1], base: [[60,85],[40,60],[25,40],[10,15]], step: 15 },
+      { id: "B03", cat: "B", name: "傷害分散器", effect: "受到的傷害量 -", maxT: [7,5,3,1], base: [[7.5,10],[5,7.5],[2.5,5],[1,2.5]], step: 2.5 },
+      { id: "B04", cat: "B", name: "護盾產生器", effect: "護盾效果 +", maxT: [7,5,3,1], base: [[60,85],[40,60],[25,40],[10,15]], step: 15 },
+      { id: "B05", cat: "B", name: "迴避預測器", effect: "迴避率 +", maxT: [7,5,3,1], base: [[5,10],[2.5,5],[1.5,2.5],[0.5,1.5]], step: 1.5 },
+      { id: "B06", cat: "B", name: "反擊轉換器", effect: "傷害反射量 +", maxT: [7,5,3,1], base: [[10,15],[7.5,10],[5,7.5],[2.5,5]], step: 5 },
+      { id: "B07", cat: "B", name: "自我修復器", effect: "恢復力 +", maxT: [7,5,3,1], base: [[60,85],[40,60],[25,40],[10,15]], step: 15 },
+      { id: "C01", cat: "C", name: "時空調節器", effect: "冷卻時間恢復速度 +", maxT: [7,5,3,1], base: [[10,15],[5,10],[2.5,5],[1,2.5]], step: 5 },
+      { id: "C02", cat: "C", name: "金幣收集器", effect: "金幣獲得量 +", maxT: [7,5,3,1], base: [[15,25],[10,15],[5,10],[2.5,5]], step: 5 },
+      { id: "C03", cat: "C", name: "記憶收集器", effect: "經驗值獲得量 +", maxT: [7,5,3,1], base: [[15,25],[10,15],[5,10],[2.5,5]], step: 5 },
+      { id: "C04", cat: "C", name: "命令阻斷器", effect: "無視群體控制機率 +", maxT: [7,5,3,1], base: [[5,10],[2.5,5],[1.5,2.5],[0.5,1.5]], step: 1.5 },
+      { id: "C05", cat: "C", name: "效果維持器", effect: "增益效果持續時間 +", maxT: [7,5,3,1], base: [[10,15],[7.5,10],[5,7.5],[2.5,5]], step: 5 },
+      { id: "C06", cat: "C", name: "狀態恢復器", effect: "受到的異常狀態持續時間 -", maxT: [7,5,3,1], base: [[10,15],[5,10],[2.5,5],[1,2.5]], step: 1.5 },
+      { id: "C07", cat: "C", name: "機動加速器", effect: "移動速度 +", maxT: [7,5,3,1], base: [[5,10],[2.5,5],[1.5,2.5],[0.5,1.5]], step: 5 },
+      { id: "D01", cat: "D", name: "全域弱點增幅器", effect: "敵人受到的暴擊傷害量 +", maxT: [7,5,3,1], base: [[5,10],[2.5,5],[1.5,2.5],[0.5,1.5]], step: 5 },
+      { id: "D02", cat: "D", name: "輸出抑制器", effect: "敵人攻擊力 -", maxT: [7,5,3,1], base: [[10,15],[5,10],[2.5,5],[1,2.5]], step: 1.5 },
+      { id: "D03", cat: "D", name: "目標粉碎增幅器", effect: "敵人防禦力 -", maxT: [7,5,3,1], base: [[17.5,20],[15,17.5],[5,10],[2.5,5]], step: 1 },
+      { id: "D04", cat: "D", name: "目標弱點增幅器", effect: "敵人受到的傷害量 +", maxT: [7,5,3,1], base: [[5,10],[2.5,5],[1.5,2.5],[0.5,1.5]], step: 5 },
+      { id: "D05", cat: "D", name: "攻擊速度限制器", effect: "敵人攻擊速度 -", maxT: [7,5,3,1], base: [[5,10],[2.5,5],[1.5,2.5],[0.5,1.5]], step: 2.5 },
+      { id: "D06", cat: "D", name: "移動限制器", effect: "敵人移動速度 -", maxT: [7,5,3,1], base: [[10,15],[5,10],[2.5,5],[1,2.5]], step: 2 },
+      { id: "D07", cat: "D", name: "恢復抑制器", effect: "敵人恢復效果 -", maxT: [7,5,3,1], base: [[17.5,20],[15,17.5],[5,10],[2.5,5]], step: 1 },
+      // Slots E01~E08 (Legend)
+      { id: "E01", cat: "E", name: "廣域電力分配器", effect: "十字2格範圍零件效果 +1 階段", scopeType: "cross", scopeRange: 2, boost: 1, rarity: "傳說" },
+      { id: "E02", cat: "E", name: "廣域水平電力匯流排", effect: "橫向2格範圍零件效果 +2 階段", scopeType: "horiz", scopeRange: 2, boost: 2, rarity: "傳說" },
+      { id: "E03", cat: "E", name: "廣域垂直電力匯流排", effect: "縱向2格範圍零件效果 +2 階段", scopeType: "vert", scopeRange: 2, boost: 2, rarity: "傳說" },
+      { id: "E04", cat: "E", name: "遠距上端相位增幅器", effect: "上端2格範圍零件效果 +4 階段", scopeType: "up", scopeRange: 2, boost: 4, rarity: "傳說" },
+      { id: "E05", cat: "E", name: "遠距下端相位增幅器", effect: "下端2格範圍零件效果 +4 階段", scopeType: "down", scopeRange: 2, boost: 4, rarity: "傳說" },
+      { id: "E06", cat: "E", name: "遠距左端相位增幅器", effect: "左端2格範圍零件效果 +4 階段", scopeType: "left", scopeRange: 2, boost: 4, rarity: "傳說" },
+      { id: "E07", cat: "E", name: "遠距右端相位增幅器", effect: "右端2格範圍零件效果 +4 階段", scopeType: "right", scopeRange: 2, boost: 4, rarity: "傳說" },
+      { id: "E08", cat: "E", name: "廣域全方位共振器", effect: "周圍2格範圍零件效果 +1 階段", scopeType: "around", scopeRange: 2, boost: 1, rarity: "傳說" },
+      // Slots E09~E16 (Unique)
+      { id: "E09", cat: "E", name: "電力分配器", effect: "十字1格範圍零件效果 +1 階段", scopeType: "cross", scopeRange: 1, boost: 1, rarity: "獨特" },
+      { id: "E10", cat: "E", name: "全方位共振器", effect: "周圍1格範圍零件效果 +1 階段", scopeType: "around", scopeRange: 1, boost: 1, rarity: "獨特" },
+      { id: "E11", cat: "E", name: "水平電力匯流排", effect: "橫向1格範圍零件效果 +2 階段", scopeType: "horiz", scopeRange: 1, boost: 2, rarity: "獨特" },
+      { id: "E12", cat: "E", name: "垂直電力匯流排", effect: "縱向1格範圍零件效果 +2 階段", scopeType: "vert", scopeRange: 1, boost: 2, rarity: "獨特" },
+      { id: "E13", cat: "E", name: "上端相位增幅器", effect: "上端1格範圍零件效果 +4 階段", scopeType: "up", scopeRange: 1, boost: 4, rarity: "獨特" },
+      { id: "E14", cat: "E", name: "下端相位增幅器", effect: "下端1格範圍零件效果 +4 階段", scopeType: "down", scopeRange: 1, boost: 4, rarity: "獨特" },
+      { id: "E15", cat: "E", name: "左端相位增幅器", effect: "左端1格範圍零件效果 +4 階段", scopeType: "left", scopeRange: 1, boost: 4, rarity: "獨特" },
+      { id: "E16", cat: "E", name: "右端相位增幅器", effect: "右端1格範圍零件效果 +4 階段", scopeType: "right", scopeRange: 1, boost: 4, rarity: "獨特" }
+    ];
+
+    const CAT_NAMES = { A: "攻擊", B: "防禦", C: "輔助", D: "弱化", E: "插槽" };
+    const RARITY_NAMES = ["傳說", "史詩", "獨特", "稀有"];
+    const RARITY_BADGE_CLASSES = ["badge-legend", "badge-epic", "badge-unique", "badge-rare"];
+
+    // App State
+    let currentFilter = 'ALL';
+    let unlockedGrid = Array(25).fill(false);
+    [6,7,8, 11,12,13, 16,17,18].forEach(i => unlockedGrid[i] = true);
+    
+    let boardParts = Array(25).fill(null); // { id, rarityIdx: 0, pinned: false, isPriority: false }
+    let priorityPartIds = new Set();
+    let ownedSlotIds = new Set(PARTS_DATA.filter(p => p.cat === 'E').map(p => p.id));
+
+    let selectedCellIndex = null;
+    let toastTimeoutTimer = null;
+    window.currentDragState = null;
+
+    window.onload = () => {
+      renderLibrary();
+      renderGrid();
+      refreshAllSelectVisuals();
+      setupGlobalDragDrop();
+      buildSlotInventoryUI();
+      updateScoreBoard();
+    };
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.className = `toast show toast-${type}`;
+      
+      if (toastTimeoutTimer) clearTimeout(toastTimeoutTimer);
+      const duration = (type === 'error') ? 7000 : 3000;
+      toastTimeoutTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
+    }
+
+    function updateSelectVisual(selectEl, cat) {
+      if (selectEl.value !== "0") {
+        selectEl.className = `constraint-select active-${cat}`;
+      } else {
+        selectEl.className = `constraint-select`;
+      }
+    }
+
+    function refreshAllSelectVisuals() {
+      ['A', 'B', 'C', 'D'].forEach(cat => {
+        const limEl = document.getElementById(`limit_${cat}`);
+        const fullEl = document.getElementById(`full_${cat}`);
+        if (limEl) updateSelectVisual(limEl, cat);
+        if (fullEl) updateSelectVisual(fullEl, cat);
+      });
+    }
+
+    function togglePriority(partId, event = null) {
+      if (event) event.stopPropagation();
+      if (priorityPartIds.has(partId)) {
+        priorityPartIds.delete(partId);
+        showToast(`⭐ 已取消 [${PARTS_DATA.find(p=>p.id===partId).name}] 的優先滿階標記`, 'normal');
+      } else {
+        priorityPartIds.add(partId);
+        showToast(`⭐ 已將 [${PARTS_DATA.find(p=>p.id===partId).name}] 設為優先滿階主力！`, 'success');
+      }
+      
+      boardParts.forEach(p => {
+        if (p && p.id === partId) p.isPriority = priorityPartIds.has(partId);
+      });
+
+      renderLibrary();
+      renderGrid();
+      if (selectedCellIndex !== null && boardParts[selectedCellIndex]) {
+        showInspector(boardParts[selectedCellIndex].id, selectedCellIndex);
+      }
+    }
+
+    // Slot Inventory Modal
+    function openSlotModal() {
+      document.getElementById('slotInventoryModal').style.display = 'flex';
+    }
+    function closeSlotModal() {
+      document.getElementById('slotInventoryModal').style.display = 'none';
+      document.getElementById('slotCountBadge').innerText = ownedSlotIds.size;
+    }
+    function buildSlotInventoryUI() {
+      const list = document.getElementById('slotCheckboxList');
+      list.innerHTML = '';
+      PARTS_DATA.filter(p => p.cat === 'E').forEach(s => {
+        const item = document.createElement('div');
+        const isChecked = ownedSlotIds.has(s.id);
+        item.className = `slot-chk-item ${isChecked ? 'checked' : ''}`;
+        item.innerHTML = `
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSlotOwned('${s.id}', this.checked, this.parentElement)">
+          <div>
+            <b>${s.name}</b>
+            <div style="color:var(--text-dim); font-size:0.7rem;">+${s.boost}階 (${s.rarity})</div>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+      document.getElementById('slotCountBadge').innerText = ownedSlotIds.size;
+    }
+    function toggleSlotOwned(id, checked, el) {
+      if (checked) { ownedSlotIds.add(id); el.classList.add('checked'); }
+      else { ownedSlotIds.delete(id); el.classList.remove('checked'); }
+    }
+    function toggleAllSlots(selectAll) {
+      PARTS_DATA.filter(p => p.cat === 'E').forEach(s => {
+        if (selectAll) ownedSlotIds.add(s.id);
+        else ownedSlotIds.delete(s.id);
+      });
+      buildSlotInventoryUI();
+    }
+
+    function filterCategory(cat) {
+      currentFilter = cat;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderLibrary();
+    }
+
+    function setupGlobalDragDrop() {
+      const libDropZone = document.getElementById('libraryDropZone');
+      libDropZone.ondragover = (e) => { e.preventDefault(); };
+      libDropZone.ondrop = (e) => {
+        e.preventDefault();
+        if (window.currentDragState && window.currentDragState.type === 'GRID') {
+          const fromIdx = window.currentDragState.fromIndex;
+          boardParts[fromIdx] = null;
+          window.currentDragState = null;
+          renderLibrary();
+          renderGrid();
+          showToast("🗑️ 零件已拖回零件庫移除", "normal");
+        }
+      };
+    }
+
+    function renderLibrary() {
+      const list = document.getElementById('libList');
+      list.innerHTML = '';
+      const placedIds = new Set(boardParts.filter(p => p !== null).map(p => p.id));
+
+      const filtered = PARTS_DATA.filter(p => currentFilter === 'ALL' || p.cat === currentFilter);
+      filtered.forEach(p => {
+        const isPlaced = placedIds.has(p.id);
+        const isPrio = priorityPartIds.has(p.id);
+        const item = document.createElement('div');
+        item.className = `part-item accent-${p.cat} ${isPlaced ? 'placed' : ''}`;
+        
+        if (!isPlaced) {
+          item.setAttribute('draggable', 'true');
+          item.ondragstart = (e) => {
+            window.currentDragState = { type: 'LIB', id: p.id };
+            e.dataTransfer.setData('text/plain', JSON.stringify(window.currentDragState));
+            e.dataTransfer.effectAllowed = 'copy';
+          };
+          item.ondragend = () => {
+            window.currentDragState = null;
+            clearDragHovers();
+          };
+        } else {
+          item.setAttribute('draggable', 'false');
+        }
+
+        item.onclick = (e) => {
+          if (e.target.classList.contains('priority-star-btn')) return;
+          if (!isPlaced) {
+            placePartDirectly(p.id);
+          } else {
+            const placedIdx = boardParts.findIndex(cell => cell && cell.id === p.id);
+            if (placedIdx !== -1) {
+              boardParts[placedIdx] = null;
+              renderLibrary();
+              renderGrid();
+              showToast(`🗑️ 已將 [${p.name}] 從盤面收回`, "normal");
+            }
+          }
+          showInspector(p.id);
+        };
+        
+        if (p.cat === 'E') {
+          item.onmouseenter = () => previewSlotFromLib(p);
+          item.onmouseleave = () => clearHighlight();
+        }
+
+        let rarityTagHtml = '';
+        if (p.cat === 'E') {
+          if (p.rarity === '傳說') rarityTagHtml = `<span class="badge badge-legend">傳說</span>`;
+          if (p.rarity === '獨特') rarityTagHtml = `<span class="badge badge-unique">獨特</span>`;
+        }
+
+        const starHtml = (p.cat !== 'E') 
+          ? `<span class="priority-star-btn ${isPrio ? 'active' : ''}" title="設為優先滿階" onclick="togglePriority('${p.id}', event)">★</span>` 
+          : '';
+
+        item.innerHTML = `
+          <div class="part-item-icon">
+            <img src="${p.id}_${p.name}.png" draggable="false" onerror="this.style.display='none';this.parentElement.innerText='${p.id}'" alt="${p.name}">
+          </div>
+          <div class="part-item-info">
+            <div class="part-item-header">
+              <span class="part-item-name">${p.name}</span>
+              <div class="badge-group">
+                <span class="badge cat-${p.cat}">${CAT_NAMES[p.cat]}</span>
+                ${rarityTagHtml}
+              </div>
+            </div>
+            <div class="part-item-effect">${p.effect}</div>
+          </div>
+          ${starHtml}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function clearDragHovers() {
+      document.querySelectorAll('.drag-target-hover').forEach(el => el.classList.remove('drag-target-hover'));
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('gridBoard');
+      grid.innerHTML = '';
+      const { tiers, connectedCounts } = calculateBoardMetrics();
+
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement('div');
+        cell.className = `cell ${!unlockedGrid[i] ? 'locked' : ''} ${selectedCellIndex === i ? 'selected' : ''}`;
+        cell.dataset.index = i;
+
+        if (!unlockedGrid[i]) {
+          cell.onclick = () => { 
+            unlockedGrid[i] = true; 
+            renderGrid(); 
+            showToast("🔓 格子已解鎖！", "normal");
+          };
+        } else {
+          cell.onclick = () => {
+            selectedCellIndex = i;
+            renderGrid();
+            if (boardParts[i]) showInspector(boardParts[i].id, i);
+          };
+
+          cell.ondblclick = (e) => {
+            e.stopPropagation();
+            if (boardParts[i]) {
+              boardParts[i] = null;
+              renderLibrary();
+              renderGrid();
+              showToast("🗑️ 零件已快速移除", "normal");
+            }
+          };
+
+          cell.ondragover = (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            cell.classList.add('drag-target-hover');
+          };
+          cell.ondragleave = () => {
+            cell.classList.remove('drag-target-hover');
+          };
+          cell.ondrop = (e) => {
+            e.preventDefault();
+            cell.classList.remove('drag-target-hover');
+            handleDropOnCell(e, i);
+          };
+
+          const pData = boardParts[i];
+          if (pData) {
+            const partInfo = PARTS_DATA.find(p => p.id === pData.id);
+            const partEl = document.createElement('div');
+            partEl.className = `cell-part bg-cat-${partInfo.cat}`;
+            partEl.setAttribute('draggable', 'true');
+            
+            partEl.ondragstart = (e) => {
+              window.currentDragState = { type: 'GRID', fromIndex: i, id: pData.id };
+              e.dataTransfer.setData('text/plain', JSON.stringify(window.currentDragState));
+              e.dataTransfer.effectAllowed = 'move';
+            };
+            partEl.ondragend = () => {
+              window.currentDragState = null;
+              clearDragHovers();
+            };
+            
+            if (partInfo.cat === 'E') {
+              partEl.onmouseenter = () => highlightSlotRange(i, partInfo);
+              partEl.onmouseleave = () => clearHighlight();
+            }
+
+            const currentTier = tiers[i] || 0;
+            const maxTier = partInfo.maxT ? partInfo.maxT[pData.rarityIdx || 0] : 0;
+            const isMaxOrOver = currentTier >= maxTier && maxTier > 0;
+            const tierClass = isMaxOrOver ? 'tier-red' : 'tier-green';
+            const pinHtml = pData.pinned ? `<span class="cell-part-pin">📌</span>` : '';
+            const starHtml = pData.isPriority ? `<span class="cell-part-star">★</span>` : '';
+
+            partEl.innerHTML = `
+              ${partInfo.cat !== 'E' ? `<div class="cell-part-tier ${tierClass}">${currentTier}/${maxTier}</div>` : ''}
+              ${pinHtml}
+              ${starHtml}
+              <img class="cell-part-img" draggable="false" src="${partInfo.id}_${partInfo.name}.png" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('afterbegin','<b style=\\'font-size:1.05rem\\'>${partInfo.id}</b>')" alt="">
+              <div class="cell-part-name cat-${partInfo.cat}">${partInfo.name}</div>
+            `;
+            cell.appendChild(partEl);
+          }
+        }
+        grid.appendChild(cell);
+      }
+
+      renderSynergyTags(connectedCounts);
+      updateScoreBoard();
+    }
+
+    function renderSynergyTags(connectedCounts) {
+      const container = document.getElementById('synergyContainer');
+      let tagsHtml = '';
+      
+      ['A', 'B', 'C', 'D'].forEach(cat => {
+        const count = connectedCounts[cat] || 0;
+        if (count >= 2) {
+          const lv = Math.min(6, count - 1);
+          const bonus = lv * 20;
+          tagsHtml += `<div class="synergy-tag synergy-tag-${cat}">${CAT_NAMES[cat]} +${bonus}%</div>`;
+        }
+      });
+
+      if (!tagsHtml) {
+        container.innerHTML = `<span style="color:var(--text-dim); font-size:0.75rem;">目前盤面無同屬性相鄰連線加成</span>`;
+      } else {
+        container.innerHTML = tagsHtml;
+      }
+    }
+
+    // Objective Player Board Evaluation (0 ~ 100 Points)
+    function evaluatePlayerScore(metrics) {
+      // 1. Effective Tier Completion Ratio (Max 40 pts)
+      let totalMaxTierCapacity = 0;
+      for (let i = 0; i < 25; i++) {
+        const p = boardParts[i];
+        if (p) {
+          const info = PARTS_DATA.find(x => x.id === p.id);
+          if (['A', 'B', 'C', 'D'].includes(info.cat)) {
+            totalMaxTierCapacity += info.maxT[p.rarityIdx || 0];
+          }
+        }
+      }
+      const effRatioScore = totalMaxTierCapacity > 0 ? Math.min(40, (metrics.totalEffectiveTiers / totalMaxTierCapacity) * 40) : 0;
+
+      // 2. Synergy Bonus Index (Max 40 pts)
+      let synergyScoreSum = 0;
+      ['A', 'B', 'C', 'D'].forEach(cat => {
+        const conn = metrics.connectedCounts[cat] || 0;
+        const bonusPct = conn >= 2 ? Math.min(120, (conn - 1) * 20) : 0;
+        synergyScoreSum += (bonusPct / 120) * 10; // each active cat up to 10 pts
+      });
+      const synScore = Math.min(40, synergyScoreSum);
+
+      // 3. Slot Utilization Efficiency (Max 20 pts)
+      const slotUtilScore = (metrics.totalSlotProvidedTiers > 0) 
+        ? Math.max(0, Math.min(20, (metrics.totalEffectiveTiers / metrics.totalSlotProvidedTiers) * 20))
+        : 20;
+
+      const totalScore = (effRatioScore + synScore + slotUtilScore);
+
+      return {
+        totalScore: Math.round(totalScore * 10) / 10,
+        effRatioScore: Math.round(effRatioScore * 10) / 10,
+        synScore: Math.round(synScore * 10) / 10,
+        slotUtilScore: Math.round(slotUtilScore * 10) / 10,
+        totalMaxTierCapacity
+      };
+    }
+
+    function updateScoreBoard() {
+      const metrics = calculateBoardMetrics();
+      const evalObj = evaluatePlayerScore(metrics);
+
+      const scoreEl = document.getElementById('scoreValue');
+      const badgeEl = document.getElementById('scoreTierBadge');
+      const fillEl = document.getElementById('scoreBarFill');
+
+      scoreEl.innerText = `${evalObj.totalScore.toFixed(1)} 分`;
+      fillEl.style.width = `${Math.min(100, evalObj.totalScore)}%`;
+
+      // Tier Badges
+      if (evalObj.totalScore >= 90) {
+        badgeEl.innerText = "SSS 頂級";
+        badgeEl.style.background = "#ffd700";
+        badgeEl.style.color = "#000";
+      } else if (evalObj.totalScore >= 75) {
+        badgeEl.innerText = "S 卓越";
+        badgeEl.style.background = "#58a6ff";
+        badgeEl.style.color = "#000";
+      } else if (evalObj.totalScore >= 60) {
+        badgeEl.innerText = "A 良好";
+        badgeEl.style.background = "#2ecc71";
+        badgeEl.style.color = "#000";
+      } else {
+        badgeEl.innerText = "B 普通";
+        badgeEl.style.background = "#8b949e";
+        badgeEl.style.color = "#000";
+      }
+
+      document.getElementById('scEffRatio').innerText = `${evalObj.effRatioScore}/40`;
+      document.getElementById('scSynRatio').innerText = `${evalObj.synScore}/40`;
+      document.getElementById('scSlotRatio').innerText = `${evalObj.slotUtilScore}/20`;
+      document.getElementById('scWasteTiers').innerText = `${metrics.slotWaste} 階`;
+      document.getElementById('scPrioMax').innerText = `${metrics.priorityMaxedCount}/${metrics.totalPriorityCount}`;
+    }
+
+    function unlockAllGrid() {
+      unlockedGrid = Array(25).fill(true);
+      renderGrid();
+      showToast("🔓 已全開 5×5 全部格子！", "success");
+    }
+
+    function handleDropOnCell(e, targetIdx) {
+      let dragData = window.currentDragState;
+      if (!dragData) {
+        try {
+          const raw = e.dataTransfer.getData('text/plain');
+          if (raw) dragData = JSON.parse(raw);
+        } catch (err) {}
+      }
+
+      if (!dragData) return;
+
+      if (dragData.type === 'LIB') {
+        const isPrio = priorityPartIds.has(dragData.id);
+        boardParts[targetIdx] = { id: dragData.id, rarityIdx: 0, pinned: false, isPriority: isPrio };
+      } else if (dragData.type === 'GRID') {
+        const fromIdx = dragData.fromIndex;
+        if (fromIdx !== targetIdx) {
+          const temp = boardParts[targetIdx];
+          boardParts[targetIdx] = boardParts[fromIdx];
+          boardParts[fromIdx] = temp;
+        }
+      }
+
+      window.currentDragState = null;
+      clearDragHovers();
+      renderLibrary();
+      renderGrid();
+      if (boardParts[targetIdx]) showInspector(boardParts[targetIdx].id, targetIdx);
+    }
+
+    function placePartDirectly(partId) {
+      const emptyIdx = unlockedGrid.findIndex((unlocked, idx) => unlocked && boardParts[idx] === null);
+      if (emptyIdx !== -1) {
+        const isPrio = priorityPartIds.has(partId);
+        boardParts[emptyIdx] = { id: partId, rarityIdx: 0, pinned: false, isPriority: isPrio };
+        renderLibrary();
+        renderGrid();
+      } else {
+        showToast("⚠️ 盤面上沒有可用的已解鎖空格！", "normal");
+      }
+    }
+
+    function togglePin(idx) {
+      if (boardParts[idx]) {
+        boardParts[idx].pinned = !boardParts[idx].pinned;
+        renderGrid();
+        showToast(boardParts[idx].pinned ? "📌 零件位置已釘選" : "🔓 已解除釘選", "normal");
+      }
+    }
+
+    function updatePartRarity(cellIdx, partId, rarityIdx) {
+      if (cellIdx !== null && boardParts[cellIdx]) {
+        boardParts[cellIdx].rarityIdx = rarityIdx;
+      }
+      renderGrid();
+      showInspector(partId, cellIdx);
+    }
+
+    // Slot Range Mechanics
+    function getSlotCoveredIndices(centerIdx, slotInfo) {
+      const r = Math.floor(centerIdx / 5);
+      const c = centerIdx % 5;
+      const indices = [];
+      const { scopeType, scopeRange } = slotInfo;
+
+      for (let dr = -2; dr <= 2; dr++) {
+        for (let dc = -2; dc <= 2; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr, nc = c + dc;
+          if (nr < 0 || nr >= 5 || nc < 0 || nc >= 5) continue;
+
+          let match = false;
+          if (scopeType === 'cross' && ((dr === 0 && Math.abs(dc) <= scopeRange) || (dc === 0 && Math.abs(dr) <= scopeRange))) match = true;
+          if (scopeType === 'horiz' && dr === 0 && Math.abs(dc) <= scopeRange) match = true;
+          if (scopeType === 'vert' && dc === 0 && Math.abs(dr) <= scopeRange) match = true;
+          if (scopeType === 'up' && dc === 0 && dr < 0 && Math.abs(dr) <= scopeRange) match = true;
+          if (scopeType === 'down' && dc === 0 && dr > 0 && Math.abs(dr) <= scopeRange) match = true;
+          if (scopeType === 'left' && dr === 0 && dc < 0 && Math.abs(dc) <= scopeRange) match = true;
+          if (scopeType === 'right' && dr === 0 && dc > 0 && Math.abs(dc) <= scopeRange) match = true;
+          if (scopeType === 'around' && Math.max(Math.abs(dr), Math.abs(dc)) <= scopeRange) match = true;
+
+          if (match) indices.push(nr * 5 + nc);
+        }
+      }
+      return indices;
+    }
+
+    function highlightSlotRange(centerIdx, slotInfo) {
+      clearHighlight();
+      const targets = getSlotCoveredIndices(centerIdx, slotInfo);
+      targets.forEach(idx => {
+        const cell = document.querySelector(`.cell[data-index='${idx}']`);
+        if (cell) {
+          cell.classList.add('highlight-target');
+          cell.setAttribute('data-boost-text', `+${slotInfo.boost}階`);
+        }
+      });
+    }
+
+    function previewSlotFromLib(slotInfo) {
+      highlightSlotRange(12, slotInfo);
+    }
+
+    function clearHighlight() {
+      document.querySelectorAll('.highlight-target').forEach(el => {
+        el.classList.remove('highlight-target');
+        el.removeAttribute('data-boost-text');
+      });
+    }
+
+    // Comprehensive Board Metrics & Precise Slot Waste Calculation
+    function calculateBoardMetrics(customBoard = null) {
+      const board = customBoard || boardParts;
+      const tiers = Array(25).fill(0);
+      const connectedCounts = { A: 0, B: 0, C: 0, D: 0 };
+      const maxedCounts = { A: 0, B: 0, C: 0, D: 0 };
+      let priorityMaxedCount = 0;
+      let totalPriorityCount = 0;
+      let totalEffectiveTiers = 0;
+      let totalSlotProvidedTiers = 0;
+
+      // 1. Slot Buffs & Total Energy Output
+      for (let i = 0; i < 25; i++) {
+        const p = board[i];
+        if (p) {
+          const info = PARTS_DATA.find(x => x.id === p.id);
+          if (info.cat === 'E') {
+            const targets = getSlotCoveredIndices(i, info);
+            totalSlotProvidedTiers += (targets.length * info.boost);
+            targets.forEach(tIdx => {
+              tiers[tIdx] += info.boost;
+            });
+          }
+        }
+      }
+
+      // 2. Evaluate Regular Parts
+      for (let i = 0; i < 25; i++) {
+        const p = board[i];
+        if (p) {
+          const info = PARTS_DATA.find(x => x.id === p.id);
+          if (['A', 'B', 'C', 'D'].includes(info.cat)) {
+            const maxT = info.maxT[p.rarityIdx || 0];
+            const currentT = tiers[i];
+            const eff = Math.min(currentT, maxT);
+            totalEffectiveTiers += eff;
+            
+            if (currentT >= maxT && maxT > 0) {
+              maxedCounts[info.cat]++;
+              if (p.isPriority) priorityMaxedCount++;
+            }
+            if (p.isPriority) totalPriorityCount++;
+          }
+        }
+      }
+
+      // 3. Unified Slot Waste (Rule 5: No duplicate penalty)
+      const slotWaste = Math.max(0, totalSlotProvidedTiers - totalEffectiveTiers);
+
+      // 4. BFS Connected Component Size
+      const visited = Array(25).fill(false);
+      for (let i = 0; i < 25; i++) {
+        if (!visited[i] && board[i]) {
+          const info = PARTS_DATA.find(x => x.id === board[i].id);
+          if (['A', 'B', 'C', 'D'].includes(info.cat)) {
+            const cat = info.cat;
+            let group = [];
+            let q = [i];
+            visited[i] = true;
+
+            while (q.length > 0) {
+              const curr = q.shift();
+              group.push(curr);
+              const cr = Math.floor(curr / 5), cc = curr % 5;
+              [[cr-1, cc], [cr+1, cc], [cr, cc-1], [cr, cc+1]].forEach(([nr, nc]) => {
+                if (nr >= 0 && nr < 5 && nc >= 0 && nc < 5) {
+                  const nIdx = nr * 5 + nc;
+                  if (!visited[nIdx] && board[nIdx]) {
+                    const nInfo = PARTS_DATA.find(x => x.id === board[nIdx].id);
+                    if (nInfo.cat === cat) {
+                      visited[nIdx] = true;
+                      q.push(nIdx);
+                    }
+                  }
+                }
+              });
+            }
+            if (group.length > connectedCounts[cat]) {
+              connectedCounts[cat] = group.length;
+            }
+          }
+        }
+      }
+
+      return { 
+        tiers, 
+        connectedCounts, 
+        maxedCounts, 
+        priorityMaxedCount, 
+        totalPriorityCount, 
+        totalEffectiveTiers, 
+        totalSlotProvidedTiers, 
+        slotWaste 
+      };
+    }
+
+    function showInspector(partId, cellIdx = null) {
+      const p = PARTS_DATA.find(x => x.id === partId);
+      const { tiers, connectedCounts } = calculateBoardMetrics();
+      const currentTier = cellIdx !== null ? tiers[cellIdx] : 0;
+      const partState = cellIdx !== null ? boardParts[cellIdx] : { rarityIdx: 0, pinned: false, isPriority: priorityPartIds.has(partId) };
+      const rarityIdx = partState.rarityIdx !== undefined ? partState.rarityIdx : 0;
+      const isPrio = priorityPartIds.has(partId) || partState.isPriority;
+      
+      const maxTier = p.maxT ? p.maxT[rarityIdx] : 0;
+      const isMaxOrOver = currentTier >= maxTier && maxTier > 0;
+      
+      const connCount = p.cat !== 'E' ? (connectedCounts[p.cat] || 0) : 0;
+      const connBonusPct = connCount >= 2 ? Math.min(120, (connCount - 1) * 20) : 0;
+
+      let statHtml = '';
+      if (p.cat !== 'E') {
+        const baseMin = p.base[rarityIdx][0];
+        const baseMax = p.base[rarityIdx][1];
+        const effectiveTier = Math.min(currentTier, maxTier);
+        const actualMin = ((baseMin + effectiveTier * p.step) * (1 + connBonusPct / 100)).toFixed(1);
+        const actualMax = ((baseMax + effectiveTier * p.step) * (1 + connBonusPct / 100)).toFixed(1);
+
+        const synDisplay = connCount >= 2 
+          ? `<span class="detail-val" style="color:var(--color-sup); font-weight:700;">${CAT_NAMES[p.cat]} +${connBonusPct}%</span>`
+          : `<span class="detail-val" style="color:var(--text-dim);">無連線加成</span>`;
+
+        statHtml = `
+          <div class="inspector-card" style="margin-top:10px;">
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:4px;">最大階數與稀有度選擇：</div>
+            <div class="rarity-pills">
+              <div class="rarity-pill ${rarityIdx === 0 ? 'active-0' : ''}" onclick="updatePartRarity(${cellIdx}, '${p.id}', 0)">7階 傳說</div>
+              <div class="rarity-pill ${rarityIdx === 1 ? 'active-1' : ''}" onclick="updatePartRarity(${cellIdx}, '${p.id}', 1)">5階 史詩</div>
+              <div class="rarity-pill ${rarityIdx === 2 ? 'active-2' : ''}" onclick="updatePartRarity(${cellIdx}, '${p.id}', 2)">3階 獨特</div>
+              <div class="rarity-pill ${rarityIdx === 3 ? 'active-3' : ''}" onclick="updatePartRarity(${cellIdx}, '${p.id}', 3)">1階 稀有</div>
+            </div>
+
+            <div class="detail-row" style="margin-top:10px;">
+              <span class="detail-label">當前階層狀態</span>
+              <span class="detail-val ${isMaxOrOver ? 'tier-red' : 'tier-green'}">${currentTier} / ${maxTier} ${currentTier >= maxTier ? '(已滿階)' : ''}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">原始基礎區間</span>
+              <span class="detail-val">${baseMin} ~ ${baseMax} %</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">同類連線效果</span>
+              ${synDisplay}
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">實際結算數值</span>
+              <span class="detail-val" style="color:#2ecc71; font-size:1.05rem;">${actualMin} ~ ${actualMax} %</span>
+            </div>
+          </div>
+        `;
+      }
+
+      const rarityBadge = p.cat !== 'E' 
+        ? `<span class="badge ${RARITY_BADGE_CLASSES[rarityIdx]}">${RARITY_NAMES[rarityIdx]}</span>`
+        : `<span class="badge ${p.rarity === '傳說' ? 'badge-legend' : 'badge-unique'}">${p.rarity}</span>`;
+
+      document.getElementById('inspectorContent').innerHTML = `
+        <div class="inspector-card">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <div class="part-item-icon" style="width:48px; height:48px;">
+              <img src="${p.id}_${p.name}.png" draggable="false" onerror="this.style.display='none';this.parentElement.innerText='${p.id}'" alt="">
+            </div>
+            <div>
+              <div style="font-size:1rem; font-weight:bold; color:#fff;">${p.name}</div>
+              <div style="display:flex; gap:4px; margin-top:3px;">
+                <span class="badge cat-${p.cat}">${CAT_NAMES[p.cat]}</span>
+                ${rarityBadge}
+                ${isPrio ? `<span class="badge" style="background:rgba(255,215,0,0.2); color:#ffd700; border:1px solid #ffd700;">⭐ 優先主力</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">主要效果</span>
+            <span class="detail-val">${p.effect}</span>
+          </div>
+          ${p.cat !== 'E' ? `
+          <div style="margin-top:10px;">
+            <button class="btn ${isPrio ? 'btn-primary' : ''}" style="width:100%;" onclick="togglePriority('${p.id}')">${isPrio ? '★ 取消優先滿階' : '☆ 設為優先滿階主力'}</button>
+          </div>` : ''}
+          ${cellIdx !== null ? `
+          <div style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn" style="flex:1;" onclick="boardParts[${cellIdx}]=null;renderLibrary();renderGrid();showInspector('${p.id}');showToast('🗑️ 零件已移除','normal');">移除零件</button>
+            <button class="btn ${partState.pinned ? 'btn-primary' : ''}" onclick="togglePin(${cellIdx});showInspector('${p.id}', ${cellIdx});">${partState.pinned ? '📌 已釘選' : '🔓 釘選位置'}</button>
+          </div>` : ''}
+        </div>
+        ${statHtml}
+      `;
+    }
+
+    // ==========================================
+    // FortressKit 雙層幾何拓撲 + 自動插槽庫存選拔求解引擎
+    // ==========================================
+    function startOptimization() {
+      const placedRegularParts = [];
+      const pinnedCells = {};
+      const freeCellIndices = [];
+
+      for (let i = 0; i < 25; i++) {
+        if (unlockedGrid[i]) {
+          if (boardParts[i]) {
+            if (boardParts[i].pinned) {
+              pinnedCells[i] = boardParts[i];
+            } else {
+              const info = PARTS_DATA.find(x => x.id === boardParts[i].id);
+              if (info.cat !== 'E') placedRegularParts.push(boardParts[i]);
+              freeCellIndices.push(i);
+            }
+          } else {
+            freeCellIndices.push(i);
+          }
+        }
+      }
+
+      if (placedRegularParts.length === 0 && Object.keys(pinnedCells).length === 0) {
+        showToast("⚠️ 優化失敗：盤面上沒有任何零件！", "error");
+        return;
+      }
+
+      const reqLimits = {
+        A: parseInt(document.getElementById('limit_A').value) || 0,
+        B: parseInt(document.getElementById('limit_B').value) || 0,
+        C: parseInt(document.getElementById('limit_C').value) || 0,
+        D: parseInt(document.getElementById('limit_D').value) || 0
+      };
+
+      const reqFull = {
+        A: parseInt(document.getElementById('full_A').value) || 0,
+        B: parseInt(document.getElementById('full_B').value) || 0,
+        C: parseInt(document.getElementById('full_C').value) || 0,
+        D: parseInt(document.getElementById('full_D').value) || 0
+      };
+
+      // 1. 收集盤面上所有已釘選鎖定的插槽 ID
+      const pinnedSlotIdSet = new Set(
+        Object.values(pinnedCells)
+          .filter(p => PARTS_DATA.find(x => x.id === p.id).cat === 'E')
+          .map(p => p.id)
+      );
+
+      // 2. 從擁有的庫存中，排除「已經被釘選」的插槽，確保同一種插槽絕不重複出現！
+      const availableOwnedSlots = Array.from(ownedSlotIds)
+        .filter(id => !pinnedSlotIdSet.has(id))
+        .map(id => ({ id, rarityIdx: 0, pinned: false }));
+
+      const catParts = {
+        A: placedRegularParts.filter(p => PARTS_DATA.find(x => x.id === p.id).cat === 'A'),
+        B: placedRegularParts.filter(p => PARTS_DATA.find(x => x.id === p.id).cat === 'B'),
+        C: placedRegularParts.filter(p => PARTS_DATA.find(x => x.id === p.id).cat === 'C'),
+        D: placedRegularParts.filter(p => PARTS_DATA.find(x => x.id === p.id).cat === 'D')
+      };
+
+      // Fully dynamic slot count: Fill all remaining free empty cells
+      const totalRegularCount = placedRegularParts.length + Object.values(pinnedCells).filter(p=>PARTS_DATA.find(x=>x.id===p.id).cat!=='E').length;
+      const pinnedSlotCount = Object.values(pinnedCells).filter(p=>PARTS_DATA.find(x=>x.id===p.id).cat==='E').length;
+      const totalAvailableUnlocked = freeCellIndices.length + Object.keys(pinnedCells).length;
+      const slotsToSelectCount = Math.max(0, totalAvailableUnlocked - totalRegularCount - pinnedSlotCount);
+
+      // UI Lock
+      const btnOpt = document.getElementById('btnOptimize');
+      btnOpt.disabled = true;
+      btnOpt.innerText = "⏳ 運算中...";
+
+      const overlay = document.getElementById('progressOverlay');
+      const fill = document.getElementById('progressBarFill');
+      const percentLabel = document.getElementById('progressPercentLabel');
+      const statusText = document.getElementById('progressStatusText');
+
+      overlay.classList.add('show');
+      fill.style.width = '0%';
+      percentLabel.innerText = '0%';
+
+      const TOTAL_ROUNDS = 25;
+      const ITERS_PER_ROUND = 2000;
+      const TOTAL_ITERS = TOTAL_ROUNDS * ITERS_PER_ROUND;
+
+      let currentRound = 0;
+      let overallBestBoard = null;
+      let overallBestFitness = -99999999999;
+      let overallBestMetrics = null;
+      let hardConstraintsSatisfied = false;
+
+      function processChunk() {
+        if (currentRound >= TOTAL_ROUNDS) {
+          overlay.classList.remove('show');
+          btnOpt.disabled = false;
+          btnOpt.innerText = "⚡ 優化";
+
+          if (overallBestBoard && hardConstraintsSatisfied) {
+            boardParts = overallBestBoard;
+            renderGrid();
+            showToast("⚡ FortressKit 已完成最佳化拓撲排位！", "success");
+          } else {
+            // Detailed failure diagnosis
+            let failReasons = [];
+            ['A', 'B', 'C', 'D'].forEach(cat => {
+              if (reqLimits[cat] > 0 && overallBestMetrics.connectedCounts[cat] < reqLimits[cat]) {
+                failReasons.push(`[${CAT_NAMES[cat]}] 連線未達門檻 (需 ${reqLimits[cat]}，最佳僅 ${overallBestMetrics.connectedCounts[cat]})`);
+              }
+              if (reqFull[cat] > 0 && overallBestMetrics.maxedCounts[cat] < reqFull[cat]) {
+                failReasons.push(`[${CAT_NAMES[cat]}] 滿階數未達目標 (需 ${reqFull[cat]}，最佳僅 ${overallBestMetrics.maxedCounts[cat]})`);
+              }
+            });
+
+            if (failReasons.length > 0) {
+              showToast(`⚠️ 優化失敗：${failReasons.join(' ｜ ')}`, "error");
+            } else {
+              showToast("⚠️ 未能找到滿足硬性門檻之配置，請檢查解鎖格數或插槽庫存", "error");
+            }
+          }
+          return;
+        }
+
+        // Run 2000 iterations per chunk
+        for (let iter = 0; iter < ITERS_PER_ROUND; iter++) {
+          let testBoard = Array(25).fill(null);
+          Object.keys(pinnedCells).forEach(k => testBoard[k] = pinnedCells[k]);
+
+          let remainingCells = [...freeCellIndices];
+          
+          // STEP 1: Auto-select slots from inventory to fill available space
+          let selectedSlots = [];
+          if (slotsToSelectCount > 0 && availableOwnedSlots.length > 0) {
+            let pool = [...availableOwnedSlots].sort(() => Math.random() - 0.5);
+            selectedSlots = pool.slice(0, Math.min(slotsToSelectCount, pool.length));
+          }
+
+          // Place Slot parts
+          for (let s of selectedSlots) {
+            let pickIdx = remainingCells[Math.floor(Math.random() * remainingCells.length)];
+            testBoard[pickIdx] = s;
+            remainingCells = remainingCells.filter(c => c !== pickIdx);
+          }
+
+          // Build Tier Map
+          const tierMap = Array(25).fill(0);
+          for (let i = 0; i < 25; i++) {
+            if (testBoard[i]) {
+              const info = PARTS_DATA.find(x => x.id === testBoard[i].id);
+              if (info.cat === 'E') {
+                const targets = getSlotCoveredIndices(i, info);
+                targets.forEach(tIdx => tierMap[tIdx] += info.boost);
+              }
+            }
+          }
+
+          // STEP 2: Level 1 Abstract Category Flood-Fill
+          const activeCats = ['A', 'B', 'C', 'D'].filter(c => (catParts[c].length > 0));
+          activeCats.sort((a,b) => (reqFull[b] * 10 + reqLimits[b]) - (reqFull[a] * 10 + reqLimits[a]));
+
+          for (let cat of activeCats) {
+            const count = catParts[cat].length;
+            if (count === 0) continue;
+
+            let seedCandidates = remainingCells.slice().sort((a,b) => tierMap[b] - tierMap[a]);
+            if (seedCandidates.length === 0) break;
+
+            let seed = seedCandidates[Math.floor(Math.random() * Math.min(seedCandidates.length, 3))];
+            let cluster = [seed];
+            remainingCells = remainingCells.filter(c => c !== seed);
+
+            while (cluster.length < count && remainingCells.length > 0) {
+              let adjCandidates = [];
+              for (let inCell of cluster) {
+                const cr = Math.floor(inCell / 5), cc = inCell % 5;
+                [[cr-1, cc], [cr+1, cc], [cr, cc-1], [cr, cc+1]].forEach(([nr, nc]) => {
+                  if (nr >= 0 && nr < 5 && nc >= 0 && nc < 5) {
+                    const nIdx = nr * 5 + nc;
+                    if (remainingCells.includes(nIdx) && !adjCandidates.includes(nIdx)) {
+                      adjCandidates.push(nIdx);
+                    }
+                  }
+                });
+              }
+
+              if (adjCandidates.length === 0) break;
+              adjCandidates.sort((a,b) => tierMap[b] - tierMap[a]);
+              let chosen = adjCandidates[0];
+              cluster.push(chosen);
+              remainingCells = remainingCells.filter(c => c !== chosen);
+            }
+
+            while (cluster.length < count && remainingCells.length > 0) {
+              cluster.push(remainingCells.shift());
+            }
+
+            // STEP 3: Level 2 Exact Mapping (Priority Targets -> MaxTiers)
+            cluster.sort((c1, c2) => tierMap[c2] - tierMap[c1]);
+
+            let sortedParts = [...catParts[cat]].sort((p1, p2) => {
+              const prio1 = p1.isPriority || priorityPartIds.has(p1.id) ? 1 : 0;
+              const prio2 = p2.isPriority || priorityPartIds.has(p2.id) ? 1 : 0;
+              if (prio1 !== prio2) return prio2 - prio1;
+              const maxT1 = PARTS_DATA.find(x => x.id === p1.id).maxT[p1.rarityIdx || 0];
+              const maxT2 = PARTS_DATA.find(x => x.id === p2.id).maxT[p2.rarityIdx || 0];
+              return maxT2 - maxT1;
+            });
+
+            for (let idx = 0; idx < count; idx++) {
+              testBoard[cluster[idx]] = sortedParts[idx];
+            }
+          }
+
+          // STEP 4: Internal Fitness Evaluation
+          const metrics = calculateBoardMetrics(testBoard);
+          const { fitness, isHardSatisfied } = evaluateInternalFitness(metrics, reqLimits, reqFull);
+
+          if (isHardSatisfied) hardConstraintsSatisfied = true;
+
+          if (fitness > overallBestFitness) {
+            overallBestFitness = fitness;
+            overallBestBoard = testBoard;
+            overallBestMetrics = metrics;
+          }
+        }
+
+        currentRound++;
+        const currentCount = currentRound * ITERS_PER_ROUND;
+        const pct = Math.min(100, Math.round((currentCount / TOTAL_ITERS) * 100));
+        fill.style.width = `${pct}%`;
+        percentLabel.innerText = `${pct}%`;
+        statusText.innerText = `正在評估幾何插槽與連通路徑 (${currentCount.toLocaleString()} / 50,000)`;
+
+        setTimeout(processChunk, 4);
+      }
+
+      setTimeout(processChunk, 10);
+    }
+
+    // Internal Fitness Function (Guides search with strict priorities)
+    function evaluateInternalFitness(metrics, reqLimits, reqFull) {
+      let fitness = 0;
+      let isHardSatisfied = true;
+
+      // 1. Check Hard Constraints
+      ['A', 'B', 'C', 'D'].forEach(cat => {
+        if (reqLimits[cat] > 0 && metrics.connectedCounts[cat] < reqLimits[cat]) {
+          isHardSatisfied = false;
+          fitness -= (reqLimits[cat] - metrics.connectedCounts[cat]) * 10000000;
+        }
+        if (reqFull[cat] > 0 && metrics.maxedCounts[cat] < reqFull[cat]) {
+          isHardSatisfied = false;
+          fitness -= (reqFull[cat] - metrics.maxedCounts[cat]) * 20000000;
+        }
+      });
+
+      // 2. Priority Target Completion (Top Soft Priority)
+      fitness += metrics.priorityMaxedCount * 100000;
+
+      // 3. Maxed Parts Reward
+      ['A', 'B', 'C', 'D'].forEach(cat => {
+        fitness += metrics.maxedCounts[cat] * 5000;
+      });
+
+      // 4. Total Effective Tiers
+      fitness += metrics.totalEffectiveTiers * 100;
+
+      // 5. Synergy Bonus Multiplier
+      ['A', 'B', 'C', 'D'].forEach(cat => {
+        const conn = metrics.connectedCounts[cat];
+        const synMultiplier = conn >= 2 ? Math.min(6, conn - 1) * 20 : 0;
+        fitness += synMultiplier * 300;
+      });
+
+      // 6. Slot Waste Penalty (Unified)
+      fitness -= metrics.slotWaste * 50;
+
+      return { fitness, isHardSatisfied };
+    }
+
+    // Export & Import
+    function exportConfig() {
+      const exportObj = {
+        unlocked: unlockedGrid,
+        board: boardParts,
+        priority: Array.from(priorityPartIds),
+        ownedSlots: Array.from(ownedSlotIds),
+        limits: {
+          A: document.getElementById('limit_A').value,
+          B: document.getElementById('limit_B').value,
+          C: document.getElementById('limit_C').value,
+          D: document.getElementById('limit_D').value
+        },
+        full: {
+          A: document.getElementById('full_A').value,
+          B: document.getElementById('full_B').value,
+          C: document.getElementById('full_C').value,
+          D: document.getElementById('full_D').value
+        }
+      };
+      const code = btoa(JSON.stringify(exportObj));
+      navigator.clipboard.writeText(code);
+      showToast("📋 配置碼已複製至剪貼簿！", "success");
+    }
+
+    function importConfig() {
+      const code = prompt("請貼上配置碼：");
+      if (!code) return;
+      try {
+        const decoded = JSON.parse(atob(code));
+        unlockedGrid = decoded.unlocked;
+        boardParts = decoded.board;
+        if (decoded.priority) priorityPartIds = new Set(decoded.priority);
+        if (decoded.ownedSlots) {
+          ownedSlotIds = new Set(decoded.ownedSlots);
+          buildSlotInventoryUI();
+        }
+        if (decoded.limits) {
+          document.getElementById('limit_A').value = decoded.limits.A || '0';
+          document.getElementById('limit_B').value = decoded.limits.B || '0';
+          document.getElementById('limit_C').value = decoded.limits.C || '0';
+          document.getElementById('limit_D').value = decoded.limits.D || '0';
+        }
+        if (decoded.full) {
+          document.getElementById('full_A').value = decoded.full.A || '0';
+          document.getElementById('full_B').value = decoded.full.B || '0';
+          document.getElementById('full_C').value = decoded.full.C || '0';
+          document.getElementById('full_D').value = decoded.full.D || '0';
+        }
+        refreshAllSelectVisuals();
+        renderLibrary();
+        renderGrid();
+        showToast("✅ 配置碼匯入成功！", "success");
+      } catch (e) {
+        showToast("❌ 無效的配置碼！", "normal");
+      }
+    }
+
+    // Clear Board AND Reset Selectors to 0
+    function clearBoard() {
+      boardParts = Array(25).fill(null);
+      priorityPartIds.clear();
+      
+      ['A', 'B', 'C', 'D'].forEach(cat => {
+        const limEl = document.getElementById(`limit_${cat}`);
+        const fullEl = document.getElementById(`full_${cat}`);
+        if (limEl) limEl.value = "0";
+        if (fullEl) fullEl.value = "0";
+      });
+
+      refreshAllSelectVisuals();
+      renderLibrary();
+      renderGrid();
+      showToast("🗑️ 盤面、優先標記與目標條件已全數重設歸零", "normal");
+    }
+  </script>
+</body>
+</html>
