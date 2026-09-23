@@ -16,7 +16,7 @@
       --text-main: #ffffff;
       --text-dim: #8b949e;
       --accent-title: #f5eedc;
-      
+
       /* Category Colors */
       --color-atk: #ff8c00;
       --color-def: #00ced1;
@@ -37,7 +37,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
     body { background-color: var(--bg-main); color: #e6edf3; min-height: 100vh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
-    
+
     /* Header */
     header { background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
     .title-group h1 { color: var(--accent-title); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
@@ -71,21 +71,21 @@
     .part-item.accent-E { border-left-color: var(--color-slt) !important; }
 
     .part-item:hover { transform: translateX(2px); border-color: #58a6ff; }
-    .part-item.placed { opacity: 0.45; filter: grayscale(0.3); cursor: pointer !important; }
-    
+    .part-item.placed { opacity: 0.45; filter: grayscale(0.3); }
+
     .part-item-icon { width: 38px; height: 38px; border-radius: 4px; background: #161b22; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; flex-shrink: 0; overflow: hidden; border: 1px solid #30363d; pointer-events: none; }
     .part-item-icon img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
     .part-item-info { flex: 1; min-width: 0; pointer-events: none; }
     .part-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
     .part-item-name { font-size: 0.85rem; font-weight: 600; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    
+
     .badge-group { display: flex; gap: 4px; align-items: center; }
     .badge { font-size: 0.65rem; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
     .badge-legend { color: var(--rarity-legend); border: 1px solid rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.12); }
     .badge-epic { color: var(--rarity-epic); border: 1px solid rgba(214, 51, 132, 0.4); background: rgba(214, 51, 132, 0.12); }
     .badge-unique { color: var(--rarity-unique); border: 1px solid rgba(0, 229, 255, 0.4); background: rgba(0, 229, 255, 0.12); }
     .badge-rare { color: var(--rarity-rare); border: 1px solid rgba(46, 204, 113, 0.4); background: rgba(46, 204, 113, 0.12); }
-    
+
     .part-item-effect { font-size: 0.73rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* Priority Star on Card */
@@ -96,15 +96,15 @@
     /* Center Panel - Fixed Grid & Realtime Synergy */
     .grid-panel { display: flex; flex-direction: column; align-items: center; padding: 16px; background: #101215; }
     .board-wrapper { display: flex; flex-direction: column; align-items: center; width: 440px; }
-    
+
     /* Optimization Constraints Controls */
     .constraint-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; width: 100%; margin-bottom: 12px; font-size: 0.78rem; display: flex; flex-direction: column; gap: 6px; }
     .constraint-row { display: flex; align-items: center; justify-content: space-between; }
     .constraint-items { display: flex; gap: 8px; }
     .constraint-item { display: flex; align-items: center; gap: 3px; font-weight: 600; }
-    
+
     .constraint-select { background: #161b22; color: var(--text-dim); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 4px; font-size: 0.75rem; cursor: pointer; outline: none; transition: all 0.25s; }
-    
+
     .constraint-select.active-A { color: var(--color-atk) !important; border-color: var(--color-atk) !important; background: rgba(255, 140, 0, 0.15) !important; box-shadow: 0 0 6px rgba(255, 140, 0, 0.4); font-weight: bold; }
     .constraint-select.active-B { color: var(--color-def) !important; border-color: var(--color-def) !important; background: rgba(0, 206, 209, 0.15) !important; box-shadow: 0 0 6px rgba(0, 206, 209, 0.4); font-weight: bold; }
     .constraint-select.active-C { color: var(--color-sup) !important; border-color: var(--color-sup) !important; background: rgba(255, 215, 0, 0.15) !important; box-shadow: 0 0 6px rgba(255, 215, 0, 0.4); font-weight: bold; }
@@ -113,13 +113,22 @@
     /* Grid Board */
     .grid-board-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; }
     .grid-board { display: grid; grid-template-columns: repeat(5, 80px); grid-template-rows: repeat(5, 80px); gap: 8px; background: #161b22; padding: 12px; border-radius: 12px; border: 2px solid #30363d; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-    
+
     .cell { background: var(--bg-cell-empty); border: 2px dashed #30363d; border-radius: 8px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; user-select: none; }
     .cell.locked { background: var(--bg-cell-locked); border: 2px dashed #21262d; }
     .cell.locked::after { content: "🔒"; font-size: 1.1rem; opacity: 0.3; pointer-events: none; }
     .cell.locked:hover { border-color: #8b949e; background: #1f242c; }
-    
+
     .cell.drag-target-hover { border-color: #58a6ff !important; background: rgba(88, 166, 255, 0.2) !important; box-shadow: 0 0 10px rgba(88, 166, 255, 0.5); }
+    .cell.drag-target-pinned { border-color: #ff4d4f !important; background: rgba(255, 77, 79, 0.2) !important; box-shadow: 0 0 10px rgba(255, 77, 79, 0.5); cursor: not-allowed !important; }
+
+    .pin-reject-shake { animation: shake-error 0.4s ease-in-out; border: 2px solid #ff4d4f !important; background: rgba(255, 77, 79, 0.2) !important; }
+    @keyframes shake-error {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-5px); }
+        40%, 80% { transform: translateX(5px); }
+    }
+
     .cell.highlight-target { background: rgba(30, 144, 255, 0.25) !important; border: 2px solid #58a6ff !important; box-shadow: 0 0 10px rgba(30, 144, 255, 0.5); }
     .cell.highlight-target::before { content: attr(data-boost-text); position: absolute; bottom: 2px; right: 4px; font-size: 0.68rem; font-weight: bold; color: #58a6ff; z-index: 5; text-shadow: 0 0 4px #000; pointer-events: none; }
     .cell.selected { border-color: #f1c40f !important; box-shadow: 0 0 8px rgba(241, 196, 15, 0.4); }
@@ -129,7 +138,7 @@
     .cell-part:active { cursor: grabbing; }
     .cell-part-img { width: 44px; height: 44px; object-fit: contain; pointer-events: none; }
     .cell-part-name { font-size: 0.68rem; font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 72px; margin-top: 2px; pointer-events: none; }
-    
+
     .cell-part-tier { position: absolute; top: 3px; left: 4px; font-size: 0.72rem; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.9); line-height: 1; z-index: 2; pointer-events: none; }
     .cell-part-pin { position: absolute; top: 2px; right: 2px; font-size: 0.75rem; z-index: 3; pointer-events: none; }
     .cell-part-star { position: absolute; top: 2px; right: 18px; font-size: 0.75rem; color: #ffd700; z-index: 3; pointer-events: none; text-shadow: 0 0 4px #000; }
@@ -155,7 +164,7 @@
     .detail-row:last-child { margin-bottom: 0; }
     .detail-label { color: var(--text-dim); }
     .detail-val { font-weight: 600; }
-    
+
     /* Objective Score Board Widget */
     .score-board { background: linear-gradient(135deg, #1f242d, #161b22); border: 1px solid #388bfd; border-radius: 8px; padding: 12px; margin-bottom: 4px; }
     .score-main-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
@@ -209,20 +218,15 @@
     .slot-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 999; }
     .slot-modal-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px; width: 480px; max-width: 92vw; max-height: 82vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
     .slot-grid-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0; }
-    
+
     .slot-chk-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; transition: all 0.15s; }
     .slot-chk-item.checked { border-color: var(--color-slt); background: rgba(30, 144, 255, 0.12); }
     .slot-chk-item input[type="checkbox"] { transform: scale(1.1); margin: 0 2px; cursor: pointer; flex-shrink: 0; }
 
     .slot-item-icon { width: 32px; height: 32px; object-fit: contain; pointer-events: none; background: var(--bg-cell-locked); border-radius: 4px; border: 1px solid #30363d; flex-shrink: 0; }
-    
-    /* 零件資訊容器：兩層結構 */
+
     .slot-item-info { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; flex: 1; pointer-events: none; }
-    
-    /* 第一層：零件名稱 */
     .slot-item-name { font-size: 0.76rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
-    
-    /* 第二層：稀有度與階數 */
     .slot-item-meta { display: flex; align-items: center; gap: 4px; line-height: 1; }
     .slot-rarity-badge { font-size: 0.65rem; padding: 1px 4px; border-radius: 3px; font-weight: 700; }
     .slot-rarity-legend { color: var(--rarity-legend); border: 1px solid rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.12); }
@@ -244,8 +248,8 @@
   <!-- Optimization Progress Modal -->
   <div id="progressOverlay" class="progress-overlay">
     <div class="progress-card">
-      <div class="progress-title">⚡ 正在進行 FortressKit 雙層拓撲求解...</div>
-      <div class="progress-status-text" id="progressStatusText">評估幾何插槽與連通路徑 (0 / 50,000)</div>
+      <div class="progress-title">⚡ FortressKit 正在最佳化配置…</div>
+      <div class="progress-status-text" id="progressStatusText">最佳化進度 (0 / 50,000)</div>
       <div class="progress-bar-track">
         <div class="progress-bar-fill" id="progressBarFill"></div>
       </div>
@@ -302,7 +306,7 @@
     <!-- Center: Fixed 5x5 Grid Board & Real-time Synergy -->
     <div class="grid-panel">
       <div class="board-wrapper">
-        
+
         <!-- Optimization Hard/Soft Targets Box -->
         <div class="constraint-box">
           <div class="constraint-row">
@@ -354,7 +358,7 @@
 
     <!-- Right: Inspector & Score Breakdown -->
     <div class="inspector-panel">
-      
+
       <!-- Objective Score Board Widget -->
       <div class="score-board" id="scoreBoardWidget">
         <div class="score-main-row">
@@ -404,6 +408,12 @@
 
     function handlePointerDown(e, partData, fromType, fromIndex = -1) {
       if (e.pointerType === 'mouse') return;
+
+      // 若來自盤面且已 Pin，則不啟動拖曳
+      if (fromType === 'GRID' && partData.pinned) {
+          return;
+      }
+
       e.preventDefault();
       pointerDragState.isPointerDown = true;
       pointerDragState.startX = e.clientX;
@@ -443,7 +453,12 @@
         clearDragHovers();
         const targetCell = document.elementFromPoint(e.clientX, e.clientY)?.closest('.cell');
         if (targetCell && !targetCell.classList.contains('locked')) {
-          targetCell.classList.add('drag-target-hover');
+            const idx = parseInt(targetCell.dataset.index, 10);
+            if (boardParts[idx] && boardParts[idx].pinned) {
+                targetCell.classList.add('drag-target-pinned');
+            } else {
+                targetCell.classList.add('drag-target-hover');
+            }
         }
       }
     }
@@ -454,7 +469,7 @@
         const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
         const cellElement = dropTarget?.closest('.cell:not(.locked)');
         const libraryElement = dropTarget?.closest('#libraryDropZone');
-        
+
         if (cellElement) {
           const targetIndex = parseInt(cellElement.dataset.index, 10);
           const mockEvent = {
@@ -547,7 +562,7 @@
     let currentFilter = 'ALL';
     let unlockedGrid = Array(25).fill(false);
     [6,7,8, 11,12,13, 16,17,18].forEach(i => unlockedGrid[i] = true);
-    
+
     let boardParts = Array(25).fill(null); // { id, rarityIdx: 0, pinned: false, isPriority: false }
     let priorityPartIds = new Set();
     let ownedSlotIds = new Set(PARTS_DATA.filter(p => p.cat === 'E').map(p => p.id));
@@ -569,7 +584,7 @@
       const toast = document.getElementById('toast');
       toast.innerText = msg;
       toast.className = `toast show toast-${type}`;
-      
+
       if (toastTimeoutTimer) clearTimeout(toastTimeoutTimer);
       const duration = (type === 'error') ? 7000 : 3000;
       toastTimeoutTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
@@ -601,7 +616,7 @@
         priorityPartIds.add(partId);
         showToast(`⭐ 已將 [${PARTS_DATA.find(p=>p.id===partId).name}] 設為優先滿階主力！`, 'success');
       }
-      
+
       boardParts.forEach(p => {
         if (p && p.id === partId) p.isPriority = priorityPartIds.has(partId);
       });
@@ -629,8 +644,10 @@
         const isChecked = ownedSlotIds.has(s.id);
         const item = document.createElement('div');
         item.className = `slot-chk-item ${isChecked ? 'checked' : ''}`;
-        
-        item.onclick = () => {
+
+        // 統一把點擊事件綁在卡片容器上，避免雙重觸發或無效點擊
+        item.onclick = (e) => {
+          e.preventDefault();
           const chk = item.querySelector('input[type="checkbox"]');
           chk.checked = !chk.checked;
           toggleSlotOwned(s.id, chk.checked, item);
@@ -639,8 +656,8 @@
         const rarityClass = s.rarity === '傳說' ? 'slot-rarity-legend' : 'slot-rarity-unique';
 
         item.innerHTML = `
-          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="event.stopPropagation(); toggleSlotOwned('${s.id}', this.checked, this.parentElement)">
-          <img src="${s.id}_${s.name}.png" class="slot-item-icon" draggable="false" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\\'slot-item-icon\\'></div>'); this.remove();">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} style="pointer-events: none;">
+          <img src="${s.id}_${s.name}.png" class="slot-item-icon" draggable="false" style="pointer-events: none;" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\\'slot-item-icon\\'></div>'); this.remove();">
           <div class="slot-item-info">
             <div class="slot-item-name">${s.name}</div>
             <div class="slot-item-meta">
@@ -700,27 +717,28 @@
         const isPrio = priorityPartIds.has(p.id);
         const item = document.createElement('div');
         item.className = `part-item accent-${p.cat} ${isPlaced ? 'placed' : ''}`;
-        
-        if (!isPlaced) {
-          item.setAttribute('draggable', 'true');
-          item.style.touchAction = 'none';
-          item.onpointerdown = (e) => {
-            if (isPlaced) return;
-            handlePointerDown(e, p, 'LIB');
-          };
-          item.ondragstart = (e) => {
-            window.currentDragState = { type: 'LIB', id: p.id };
-            e.dataTransfer.setData('text/plain', JSON.stringify(window.currentDragState));
-            e.dataTransfer.effectAllowed = 'copy';
-          };
-          item.ondragend = () => {
-            window.currentDragState = null;
-            clearDragHovers();
-          };
-        } else {
-          item.setAttribute('draggable', 'false');
-        }
 
+        // 變更點：解禁拖曳限制。所有零件庫零件（不論是否 placed）都可以進行拖曳。
+        item.setAttribute('draggable', 'true');
+        item.style.touchAction = 'none';
+
+        item.onpointerdown = (e) => {
+          handlePointerDown(e, p, 'LIB');
+        };
+
+        item.ondragstart = (e) => {
+          window.currentDragState = { type: 'LIB', id: p.id };
+          e.dataTransfer.setData('text/plain', JSON.stringify(window.currentDragState));
+          // 修正 HTML5 拖曳限制：同時允許 Copy 與 Move
+          e.dataTransfer.effectAllowed = 'copyMove';
+        };
+
+        item.ondragend = () => {
+          window.currentDragState = null;
+          clearDragHovers();
+        };
+
+        // 點擊行為維持不變：未放置則放入第一空位；已放置則從盤面移除
         item.onclick = (e) => {
           if (e.target.classList.contains('priority-star-btn')) return;
           if (!isPlaced) {
@@ -736,7 +754,7 @@
           }
           showInspector(p.id);
         };
-        
+
         if (p.cat === 'E') {
           item.onmouseenter = () => previewSlotFromLib(p);
           item.onmouseleave = () => clearHighlight();
@@ -774,6 +792,7 @@
 
     function clearDragHovers() {
       document.querySelectorAll('.drag-target-hover').forEach(el => el.classList.remove('drag-target-hover'));
+      document.querySelectorAll('.drag-target-pinned').forEach(el => el.classList.remove('drag-target-pinned'));
     }
 
     function renderGrid() {
@@ -811,15 +830,28 @@
 
           cell.ondragover = (e) => {
             e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            cell.classList.add('drag-target-hover');
+            // 變更點：移除原本寫死的 dropEffect='move'
+            // 並加入 Pin 防護游標提示
+            if (boardParts[i] && boardParts[i].pinned) {
+                e.dataTransfer.dropEffect = 'none';
+                cell.classList.add('drag-target-pinned');
+            } else {
+                if (window.currentDragState && window.currentDragState.type === 'LIB') {
+                    e.dataTransfer.dropEffect = 'copy';
+                } else {
+                    e.dataTransfer.dropEffect = 'move';
+                }
+                cell.classList.add('drag-target-hover');
+            }
           };
           cell.ondragleave = () => {
             cell.classList.remove('drag-target-hover');
+            cell.classList.remove('drag-target-pinned');
           };
           cell.ondrop = (e) => {
             e.preventDefault();
             cell.classList.remove('drag-target-hover');
+            cell.classList.remove('drag-target-pinned');
             handleDropOnCell(e, i);
           };
 
@@ -830,20 +862,30 @@
             partEl.className = `cell-part bg-cat-${partInfo.cat}`;
             partEl.setAttribute('draggable', 'true');
             partEl.style.touchAction = 'none';
-            
+
             partEl.ondragstart = (e) => {
+              // 變更點：如果來源零件已 Pin，不允許拖走
+              if (pData.pinned) {
+                e.preventDefault();
+                showToast("📌 此零件已釘選，無法拖曳", "normal");
+                return;
+              }
               window.currentDragState = { type: 'GRID', fromIndex: i, id: pData.id };
               e.dataTransfer.setData('text/plain', JSON.stringify(window.currentDragState));
               e.dataTransfer.effectAllowed = 'move';
             };
+
             partEl.ondragend = () => {
               window.currentDragState = null;
               clearDragHovers();
             };
+
             partEl.onpointerdown = (e) => {
+              // 防護 pointer events 的拖曳啟動
+              if (pData.pinned) return;
               handlePointerDown(e, pData, 'GRID', i);
             };
-            
+
             if (partInfo.cat === 'E') {
               partEl.onmouseenter = () => highlightSlotRange(i, partInfo);
               partEl.onmouseleave = () => clearHighlight();
@@ -876,7 +918,7 @@
     function renderSynergyTags(connectedCounts) {
       const container = document.getElementById('synergyContainer');
       let tagsHtml = '';
-      
+
       ['A', 'B', 'C', 'D'].forEach(cat => {
         const count = connectedCounts[cat] || 0;
         if (count >= 2) {
@@ -893,44 +935,50 @@
       }
     }
 
-    // Objective Player Board Evaluation (0 ~ 100 Points)
+    // Objective Player Board Evaluation
     function evaluatePlayerScore(metrics) {
-      // 1. Effective Tier Completion Ratio (Max 40 pts)
-      let totalMaxTierCapacity = 0;
-      for (let i = 0; i < 25; i++) {
-        const p = boardParts[i];
-        if (p) {
-          const info = PARTS_DATA.find(x => x.id === p.id);
-          if (['A', 'B', 'C', 'D'].includes(info.cat)) {
-            totalMaxTierCapacity += info.maxT[p.rarityIdx || 0];
-          }
+        let potentialTierCapacity = 0;
+        let synergyWeightedTiers = 0;
+        const categoryEffectiveTiers = { A: 0, B: 0, C: 0, D: 0 };
+
+        for (let i = 0; i < 25; i++) {
+            const p = boardParts[i];
+            if (p) {
+                const info = PARTS_DATA.find(x => x.id === p.id);
+                if (['A', 'B', 'C', 'D'].includes(info.cat)) {
+                    const maxT = info.maxT[p.rarityIdx || 0];
+                    potentialTierCapacity += maxT;
+
+                    const currentTier = metrics.tiers[i] || 0;
+                    const effectiveTier = Math.min(currentTier, maxT);
+                    categoryEffectiveTiers[info.cat] += effectiveTier;
+                }
+            }
         }
-      }
-      const effRatioScore = totalMaxTierCapacity > 0 ? Math.min(40, (metrics.totalEffectiveTiers / totalMaxTierCapacity) * 40) : 0;
 
-      // 2. Synergy Bonus Index (Max 40 pts)
-      let synergyScoreSum = 0;
-      ['A', 'B', 'C', 'D'].forEach(cat => {
-        const conn = metrics.connectedCounts[cat] || 0;
-        const bonusPct = conn >= 2 ? Math.min(120, (conn - 1) * 20) : 0;
-        synergyScoreSum += (bonusPct / 120) * 10; // each active cat up to 10 pts
-      });
-      const synScore = Math.min(40, synergyScoreSum);
+        const effRatioScore = (potentialTierCapacity > 0) ? (metrics.totalEffectiveTiers / potentialTierCapacity) * 40 : 0;
 
-      // 3. Slot Utilization Efficiency (Max 20 pts)
-      const slotUtilScore = (metrics.totalSlotProvidedTiers > 0) 
-        ? Math.max(0, Math.min(20, (metrics.totalEffectiveTiers / metrics.totalSlotProvidedTiers) * 20))
-        : 20;
+        ['A', 'B', 'C', 'D'].forEach(cat => {
+            const conn = metrics.connectedCounts[cat] || 0;
+            const bonusPct = conn >= 2 ? (Math.min(6, conn - 1) * 0.20) : 0;
+            synergyWeightedTiers += bonusPct * categoryEffectiveTiers[cat];
+        });
 
-      const totalScore = (effRatioScore + synScore + slotUtilScore);
+        const synScore = (potentialTierCapacity > 0) ? (synergyWeightedTiers / (1.2 * potentialTierCapacity)) * 40 : 0;
+        const slotUtilScore = (metrics.totalSlotProvidedTiers > 0) ? (metrics.totalEffectiveTiers / metrics.totalSlotProvidedTiers) * 20 : 0;
 
-      return {
-        totalScore: Math.round(totalScore * 10) / 10,
-        effRatioScore: Math.round(effRatioScore * 10) / 10,
-        synScore: Math.round(synScore * 10) / 10,
-        slotUtilScore: Math.round(slotUtilScore * 10) / 10,
-        totalMaxTierCapacity
-      };
+        const finalEffRatioScore = Math.min(40, effRatioScore);
+        const finalSynScore = Math.min(40, synScore);
+        const finalSlotUtilScore = Math.min(20, slotUtilScore);
+
+        const totalScore = finalEffRatioScore + finalSynScore + finalSlotUtilScore;
+
+        return {
+            totalScore: Math.round(totalScore * 10) / 10,
+            effRatioScore: Math.round(finalEffRatioScore * 10) / 10,
+            synScore: Math.round(finalSynScore * 10) / 10,
+            slotUtilScore: Math.round(finalSlotUtilScore * 10) / 10,
+        };
     }
 
     function updateScoreBoard() {
@@ -944,7 +992,6 @@
       scoreEl.innerText = `${evalObj.totalScore.toFixed(1)} 分`;
       fillEl.style.width = `${Math.min(100, evalObj.totalScore)}%`;
 
-      // Tier Badges
       if (evalObj.totalScore >= 90) {
         badgeEl.innerText = "SSS 頂級";
         badgeEl.style.background = "#ffd700";
@@ -987,12 +1034,40 @@
 
       if (!dragData) return;
 
+      // 共通阻擋 1：目標未解鎖
+      if (!unlockedGrid[targetIdx]) {
+        showToast("⚠️ 此格子未解鎖！", "normal");
+        return;
+      }
+
+      // 共通阻擋 2：目標已有零件且已 Pin
+      if (boardParts[targetIdx] && boardParts[targetIdx].pinned) {
+        const cell = document.querySelector(`.cell[data-index='${targetIdx}']`);
+        if (cell) {
+          cell.classList.add('pin-reject-shake');
+          setTimeout(() => cell.classList.remove('pin-reject-shake'), 400);
+        }
+        showToast("⛔ 此位置已 Pin，無法移動或覆蓋", "error");
+        return;
+      }
+
       if (dragData.type === 'LIB') {
+        // LIB -> GRID：覆蓋與重新指派邏輯
         const isPrio = priorityPartIds.has(dragData.id);
+        const existingIdx = boardParts.findIndex(p => p && p.id === dragData.id);
+
+        // 賦予預設值 (rarityIdx重置為0、解除Pin)，直接覆蓋目標格
         boardParts[targetIdx] = { id: dragData.id, rarityIdx: 0, pinned: false, isPriority: isPrio };
+
+        // 維持零件唯一性：如果盤面上其他地方原本有這個零件，將其清除（舊實例消滅）
+        if (existingIdx !== -1 && existingIdx !== targetIdx) {
+          boardParts[existingIdx] = null;
+        }
       } else if (dragData.type === 'GRID') {
+        // GRID -> GRID：交換位置邏輯
         const fromIdx = dragData.fromIndex;
         if (fromIdx !== targetIdx) {
+          // 直接交換參考，保留 100% 原始狀態（rarityIdx、pinned、isPriority）
           const temp = boardParts[targetIdx];
           boardParts[targetIdx] = boardParts[fromIdx];
           boardParts[fromIdx] = temp;
@@ -1086,7 +1161,7 @@
       });
     }
 
-    // Comprehensive Board Metrics & Precise Slot Waste Calculation
+    // Comprehensive Board Metrics
     function calculateBoardMetrics(customBoard = null) {
       const board = customBoard || boardParts;
       const tiers = Array(25).fill(0);
@@ -1097,7 +1172,6 @@
       let totalEffectiveTiers = 0;
       let totalSlotProvidedTiers = 0;
 
-      // 1. Slot Buffs & Total Energy Output
       for (let i = 0; i < 25; i++) {
         const p = board[i];
         if (p) {
@@ -1112,7 +1186,6 @@
         }
       }
 
-      // 2. Evaluate Regular Parts
       for (let i = 0; i < 25; i++) {
         const p = board[i];
         if (p) {
@@ -1122,7 +1195,7 @@
             const currentT = tiers[i];
             const eff = Math.min(currentT, maxT);
             totalEffectiveTiers += eff;
-            
+
             if (currentT >= maxT && maxT > 0) {
               maxedCounts[info.cat]++;
               if (p.isPriority) priorityMaxedCount++;
@@ -1132,10 +1205,8 @@
         }
       }
 
-      // 3. Unified Slot Waste (Rule 5: No duplicate penalty)
       const slotWaste = Math.max(0, totalSlotProvidedTiers - totalEffectiveTiers);
 
-      // 4. BFS Connected Component Size
       const visited = Array(25).fill(false);
       for (let i = 0; i < 25; i++) {
         if (!visited[i] && board[i]) {
@@ -1189,10 +1260,10 @@
       const partState = cellIdx !== null ? boardParts[cellIdx] : { rarityIdx: 0, pinned: false, isPriority: priorityPartIds.has(partId) };
       const rarityIdx = partState.rarityIdx !== undefined ? partState.rarityIdx : 0;
       const isPrio = priorityPartIds.has(partId) || partState.isPriority;
-      
+
       const maxTier = p.maxT ? p.maxT[rarityIdx] : 0;
       const isMaxOrOver = currentTier >= maxTier && maxTier > 0;
-      
+
       const connCount = p.cat !== 'E' ? (connectedCounts[p.cat] || 0) : 0;
       const connBonusPct = connCount >= 2 ? Math.min(120, (connCount - 1) * 20) : 0;
 
@@ -1318,14 +1389,12 @@
         D: parseInt(document.getElementById('full_D').value) || 0
       };
 
-      // 1. 收集盤面上所有已釘選鎖定的插槽 ID
       const pinnedSlotIdSet = new Set(
         Object.values(pinnedCells)
           .filter(p => PARTS_DATA.find(x => x.id === p.id).cat === 'E')
           .map(p => p.id)
       );
 
-      // 2. 從擁有的庫存中，排除「已經被釘選」的插槽，確保同一種插槽絕不重複出現！
       const availableOwnedSlots = Array.from(ownedSlotIds)
         .filter(id => !pinnedSlotIdSet.has(id))
         .map(id => ({ id, rarityIdx: 0, pinned: false }));
@@ -1337,13 +1406,11 @@
         D: placedRegularParts.filter(p => PARTS_DATA.find(x => x.id === p.id).cat === 'D')
       };
 
-      // Fully dynamic slot count: Fill all remaining free empty cells
       const totalRegularCount = placedRegularParts.length + Object.values(pinnedCells).filter(p=>PARTS_DATA.find(x=>x.id===p.id).cat!=='E').length;
       const pinnedSlotCount = Object.values(pinnedCells).filter(p=>PARTS_DATA.find(x=>x.id===p.id).cat==='E').length;
       const totalAvailableUnlocked = freeCellIndices.length + Object.keys(pinnedCells).length;
       const slotsToSelectCount = Math.max(0, totalAvailableUnlocked - totalRegularCount - pinnedSlotCount);
 
-      // UI Lock
       const btnOpt = document.getElementById('btnOptimize');
       btnOpt.disabled = true;
       btnOpt.innerText = "⏳ 運算中...";
@@ -1376,9 +1443,8 @@
           if (overallBestBoard && hardConstraintsSatisfied) {
             boardParts = overallBestBoard;
             renderGrid();
-            showToast("⚡ FortressKit 已完成最佳化拓撲排位！", "success");
+            showToast("⚡ FortressKit 最佳化完成！可直接拖曳零件微調。", "success");
           } else {
-            // Detailed failure diagnosis
             let failReasons = [];
             ['A', 'B', 'C', 'D'].forEach(cat => {
               if (reqLimits[cat] > 0 && overallBestMetrics.connectedCounts[cat] < reqLimits[cat]) {
@@ -1398,28 +1464,24 @@
           return;
         }
 
-        // Run 2000 iterations per chunk
         for (let iter = 0; iter < ITERS_PER_ROUND; iter++) {
           let testBoard = Array(25).fill(null);
           Object.keys(pinnedCells).forEach(k => testBoard[k] = pinnedCells[k]);
 
           let remainingCells = [...freeCellIndices];
-          
-          // STEP 1: Auto-select slots from inventory to fill available space
+
           let selectedSlots = [];
           if (slotsToSelectCount > 0 && availableOwnedSlots.length > 0) {
             let pool = [...availableOwnedSlots].sort(() => Math.random() - 0.5);
             selectedSlots = pool.slice(0, Math.min(slotsToSelectCount, pool.length));
           }
 
-          // Place Slot parts
           for (let s of selectedSlots) {
             let pickIdx = remainingCells[Math.floor(Math.random() * remainingCells.length)];
             testBoard[pickIdx] = s;
             remainingCells = remainingCells.filter(c => c !== pickIdx);
           }
 
-          // Build Tier Map
           const tierMap = Array(25).fill(0);
           for (let i = 0; i < 25; i++) {
             if (testBoard[i]) {
@@ -1431,7 +1493,6 @@
             }
           }
 
-          // STEP 2: Level 1 Abstract Category Flood-Fill
           const activeCats = ['A', 'B', 'C', 'D'].filter(c => (catParts[c].length > 0));
           activeCats.sort((a,b) => (reqFull[b] * 10 + reqLimits[b]) - (reqFull[a] * 10 + reqLimits[a]));
 
@@ -1471,7 +1532,6 @@
               cluster.push(remainingCells.shift());
             }
 
-            // STEP 3: Level 2 Exact Mapping (Priority Targets -> MaxTiers)
             cluster.sort((c1, c2) => tierMap[c2] - tierMap[c1]);
 
             let sortedParts = [...catParts[cat]].sort((p1, p2) => {
@@ -1488,7 +1548,6 @@
             }
           }
 
-          // STEP 4: Internal Fitness Evaluation
           const metrics = calculateBoardMetrics(testBoard);
           const { fitness, isHardSatisfied } = evaluateInternalFitness(metrics, reqLimits, reqFull);
 
@@ -1506,7 +1565,7 @@
         const pct = Math.min(100, Math.round((currentCount / TOTAL_ITERS) * 100));
         fill.style.width = `${pct}%`;
         percentLabel.innerText = `${pct}%`;
-        statusText.innerText = `正在評估幾何插槽與連通路徑 (${currentCount.toLocaleString()} / 50,000)`;
+        statusText.innerText = `最佳化進度 (${currentCount.toLocaleString()} / 50,000)`;
 
         setTimeout(processChunk, 4);
       }
@@ -1514,12 +1573,10 @@
       setTimeout(processChunk, 10);
     }
 
-    // Internal Fitness Function (Guides search with strict priorities)
     function evaluateInternalFitness(metrics, reqLimits, reqFull) {
       let fitness = 0;
       let isHardSatisfied = true;
 
-      // 1. Check Hard Constraints
       ['A', 'B', 'C', 'D'].forEach(cat => {
         if (reqLimits[cat] > 0 && metrics.connectedCounts[cat] < reqLimits[cat]) {
           isHardSatisfied = false;
@@ -1531,31 +1588,21 @@
         }
       });
 
-      // 2. Priority Target Completion (Top Soft Priority)
       fitness += metrics.priorityMaxedCount * 100000;
-
-      // 3. Maxed Parts Reward
       ['A', 'B', 'C', 'D'].forEach(cat => {
         fitness += metrics.maxedCounts[cat] * 5000;
       });
-
-      // 4. Total Effective Tiers
       fitness += metrics.totalEffectiveTiers * 100;
-
-      // 5. Synergy Bonus Multiplier
       ['A', 'B', 'C', 'D'].forEach(cat => {
         const conn = metrics.connectedCounts[cat];
         const synMultiplier = conn >= 2 ? Math.min(6, conn - 1) * 20 : 0;
         fitness += synMultiplier * 300;
       });
-
-      // 6. Slot Waste Penalty (Unified)
       fitness -= metrics.slotWaste * 50;
 
       return { fitness, isHardSatisfied };
     }
 
-    // Export & Import
     function exportConfig() {
       const exportObj = {
         unlocked: unlockedGrid,
@@ -1613,11 +1660,10 @@
       }
     }
 
-    // Clear Board AND Reset Selectors to 0
     function clearBoard() {
       boardParts = Array(25).fill(null);
       priorityPartIds.clear();
-      
+
       ['A', 'B', 'C', 'D'].forEach(cat => {
         const limEl = document.getElementById(`limit_${cat}`);
         const fullEl = document.getElementById(`full_${cat}`);
