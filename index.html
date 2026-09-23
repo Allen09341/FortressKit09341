@@ -36,16 +36,16 @@
       --rarity-rare: #2ecc71;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    
+
     /* Base Body Styling (Scrolling delegated to Media Queries) */
-    body { background-color: var(--bg-main); color: #e6edf3; display: flex; flex-direction: column; overflow-x: hidden; }
+    body { background-color: var(--bg-main); color: #e6edf3; display: flex; flex-direction: column; overflow-x: auto; }
 
     /* Header */
-    header { background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
+    header { background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); padding: 10px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
     .title-group h1 { color: var(--accent-title); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
     .title-group p { color: var(--text-dim); font-size: 0.75rem; margin-top: 2px; }
-    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-    .btn { background: #30363d; color: #fff; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-start; }
+    .btn { background: #30363d; color: #fff; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
     .btn:hover { background: #3c444d; border-color: #8b949e; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-opt { background: #238636; border-color: #2ea043; font-weight: 600; }
@@ -53,24 +53,24 @@
     .btn-danger { background: #b62324; border-color: #d83a52; font-weight: 600; }
     .btn-danger:hover { background: #d83a52; }
 
-    /* App Main Layout Base */
-    .app-body { width: 100%; flex: 1; }
+    /* App Main Layout Base (Shared Grid Layout for Native Pinch-Zoom) */
+    .app-body { display: grid; grid-template-columns: 320px 1fr 350px; width: 100%; flex: 1; }
 
     /* Responsive Layout & Independent Scrolling */
     @media (min-width: 1024px) {
       body { height: 100vh; overflow: hidden; }
-      .app-body { display: grid; grid-template-columns: 320px 1fr 350px; overflow: hidden; }
-      .library-panel, .grid-panel, .inspector-panel { height: 100%; overflow-y: auto; }
+      .app-body { height: calc(100vh - 56px); overflow: hidden; }
+      .library-panel, .inspector-panel { height: 100%; overflow-y: auto; }
+      /* grid-panel maintains standard behavior, no independent scroll */
+      .grid-panel { height: 100%; } 
       .lib-tabs { top: 0; }
     }
 
     @media (max-width: 1023px) {
-      body { min-height: 100vh; overflow-y: auto; }
-      .app-body { display: flex; flex-direction: column; }
-      .library-panel, .grid-panel, .inspector-panel { height: auto; }
-      .lib-tabs { top: 60px; /* roughly header height */ }
-      .inspector-panel { border-left: none !important; border-top: 1px solid var(--border-color); }
-      .library-panel { border-right: none !important; border-bottom: 1px solid var(--border-color); }
+      body { min-height: 100vh; overflow: auto; }
+      .app-body { height: auto; }
+      .lib-tabs { top: 80px; /* offset for wrapped header */ }
+      header { padding: 10px 16px; }
     }
 
     /* Left Panel - Library */
