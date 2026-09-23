@@ -36,13 +36,15 @@
       --rarity-rare: #2ecc71;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    body { background-color: var(--bg-main); color: #e6edf3; min-height: 100vh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+    
+    /* Base Body Styling (Scrolling delegated to Media Queries) */
+    body { background-color: var(--bg-main); color: #e6edf3; display: flex; flex-direction: column; overflow-x: hidden; }
 
     /* Header */
     header { background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
     .title-group h1 { color: var(--accent-title); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
     .title-group p { color: var(--text-dim); font-size: 0.75rem; margin-top: 2px; }
-    .header-actions { display: flex; gap: 8px; }
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .btn { background: #30363d; color: #fff; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
     .btn:hover { background: #3c444d; border-color: #8b949e; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -51,12 +53,29 @@
     .btn-danger { background: #b62324; border-color: #d83a52; font-weight: 600; }
     .btn-danger:hover { background: #d83a52; }
 
-    /* App Main Layout */
-    .app-body { display: grid; grid-template-columns: 320px 1fr 350px; min-height: calc(100vh - 56px); flex: 1; }
+    /* App Main Layout Base */
+    .app-body { width: 100%; flex: 1; }
+
+    /* Responsive Layout & Independent Scrolling */
+    @media (min-width: 1024px) {
+      body { height: 100vh; overflow: hidden; }
+      .app-body { display: grid; grid-template-columns: 320px 1fr 350px; overflow: hidden; }
+      .library-panel, .grid-panel, .inspector-panel { height: 100%; overflow-y: auto; }
+      .lib-tabs { top: 0; }
+    }
+
+    @media (max-width: 1023px) {
+      body { min-height: 100vh; overflow-y: auto; }
+      .app-body { display: flex; flex-direction: column; }
+      .library-panel, .grid-panel, .inspector-panel { height: auto; }
+      .lib-tabs { top: 60px; /* roughly header height */ }
+      .inspector-panel { border-left: none !important; border-top: 1px solid var(--border-color); }
+      .library-panel { border-right: none !important; border-bottom: 1px solid var(--border-color); }
+    }
 
     /* Left Panel - Library */
-    .library-panel { background: var(--bg-panel); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; height: 100%; min-height: 800px; }
-    .lib-tabs { display: grid; grid-template-columns: repeat(6, 1fr); padding: 8px; gap: 4px; border-bottom: 1px solid var(--border-color); position: sticky; top: 56px; background: var(--bg-panel); z-index: 10; }
+    .library-panel { background: var(--bg-panel); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+    .lib-tabs { display: grid; grid-template-columns: repeat(6, 1fr); padding: 8px; gap: 4px; border-bottom: 1px solid var(--border-color); position: sticky; background: var(--bg-panel); z-index: 10; }
     .tab-btn { background: var(--bg-card); border: 1px solid transparent; color: var(--text-dim); font-size: 0.75rem; padding: 6px 0; border-radius: 4px; cursor: pointer; text-align: center; }
     .tab-btn.active { color: #fff; font-weight: 600; border-color: var(--border-color); background: #30363d; }
     .lib-list { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
@@ -95,7 +114,7 @@
 
     /* Center Panel - Fixed Grid & Realtime Synergy */
     .grid-panel { display: flex; flex-direction: column; align-items: center; padding: 16px; background: #101215; }
-    .board-wrapper { display: flex; flex-direction: column; align-items: center; width: 440px; }
+    .board-wrapper { display: flex; flex-direction: column; align-items: center; width: 440px; max-width: 100%; }
 
     /* Optimization Constraints Controls */
     .constraint-box { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; width: 100%; margin-bottom: 12px; font-size: 0.78rem; display: flex; flex-direction: column; gap: 6px; }
@@ -157,7 +176,7 @@
     .synergy-tag-D { color: var(--color-deb); background: rgba(255, 77, 79, 0.12); border-color: rgba(255, 77, 79, 0.3); }
 
     /* Right Panel - Inspector & Score Breakdown */
-    .inspector-panel { background: var(--bg-panel); border-left: 1px solid var(--border-color); padding: 16px; display: flex; flex-direction: column; gap: 12px; height: 100%; min-height: 800px; }
+    .inspector-panel { background: var(--bg-panel); border-left: 1px solid var(--border-color); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .panel-title { font-size: 0.95rem; font-weight: 700; color: var(--accent-title); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
     .inspector-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
     .detail-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.84rem; }
@@ -264,7 +283,7 @@
         <h3 style="font-size:1rem; color:var(--accent-title);">🔌 可用插槽零件庫存設定</h3>
         <button class="btn" onclick="closeSlotModal()">✕</button>
       </div>
-      <p style="font-size:0.75rem; color:var(--text-dim);">勾選您擁有的插槽零件。優化時演算法將自動從這些庫存中挑選最佳插槽填滿剩餘空格：</p>
+      <p style="font-size:0.75rem; color:var(--text-dim);">勾選您擁有的插槽零件。最佳化時演算法將自動從這些庫存中挑選最佳插槽填滿剩餘空格：</p>
       <div class="slot-grid-select" id="slotCheckboxList"></div>
       <div style="display:flex; justify-content:space-between; margin-top:14px;">
         <button class="btn" onclick="toggleAllSlots(true)">全選</button>
@@ -278,13 +297,13 @@
   <header>
     <div class="title-group">
       <h1>FortressKit｜零件配置編輯器</h1>
-      <p>解鎖格子・拖曳零件・增幅階段・快速連結・一鍵優化</p>
+      <p>解鎖格子・配置零件・調整階段・連線增幅・一鍵最佳化</p>
     </div>
     <div class="header-actions">
       <button class="btn" onclick="openSlotModal()">🔌 插槽庫存 (<span id="slotCountBadge">16</span>)</button>
       <button class="btn" onclick="exportConfig()">📋 匯出配置</button>
       <button class="btn" onclick="importConfig()">📥 匯入配置</button>
-      <button class="btn btn-opt" id="btnOptimize" onclick="startOptimization()">⚡ 優化</button>
+      <button class="btn btn-opt" id="btnOptimize" onclick="startOptimization()">⚡ 最佳化</button>
       <button class="btn btn-danger" onclick="clearBoard()">🗑️ 清空</button>
     </div>
   </header>
@@ -342,7 +361,7 @@
 
         <!-- Refined Hints -->
         <div class="board-hint-box">
-          點擊解鎖 ｜ ⭐ 標記優先滿階 ｜ 點選放置/收回 ｜ 拖曳交換 ｜ 雙擊移除
+          點擊解鎖｜點選放置/收回｜拖曳調整｜雙擊移除
         </div>
 
         <!-- Real-time Synergy Effect Display -->
@@ -1371,7 +1390,7 @@
       }
 
       if (placedRegularParts.length === 0 && Object.keys(pinnedCells).length === 0) {
-        showToast("⚠️ 優化失敗：盤面上沒有任何零件！", "error");
+        showToast("⚠️ 最佳化失敗：盤面上沒有任何零件！", "error");
         return;
       }
 
@@ -1438,7 +1457,7 @@
         if (currentRound >= TOTAL_ROUNDS) {
           overlay.classList.remove('show');
           btnOpt.disabled = false;
-          btnOpt.innerText = "⚡ 優化";
+          btnOpt.innerText = "⚡ 最佳化";
 
           if (overallBestBoard && hardConstraintsSatisfied) {
             boardParts = overallBestBoard;
@@ -1456,7 +1475,7 @@
             });
 
             if (failReasons.length > 0) {
-              showToast(`⚠️ 優化失敗：${failReasons.join(' ｜ ')}`, "error");
+              showToast(`⚠️ 最佳化失敗：${failReasons.join(' ｜ ')}`, "error");
             } else {
               showToast("⚠️ 未能找到滿足硬性門檻之配置，請檢查解鎖格數或插槽庫存", "error");
             }
