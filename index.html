@@ -391,13 +391,13 @@
           <div class="score-bar-val" id="scoreBarFill"></div>
         </div>
         <div class="score-subgrid">
-          <div>📈 階段達成：<b id="scEffRatio" style="color:#2ecc71;">0/40</b></div>
-          <div>🔗 連線增益：<b id="scSynRatio" style="color:#58a6ff;">0/40</b></div>
-          <div>⚡ 插槽利用：<b id="scSlotRatio" style="color:#ffd700;">0/20</b></div>
+          <div>📈 有效階段：<b id="scEffRatio" style="color:#2ecc71;">0/0</b></div>
+          <div>🔗 連線等級：<b id="scSynRatio" style="color:#58a6ff;">0/0</b></div>
+          <div>⚠️ 階段溢出：<b id="scTierOverflow" style="color:#ffd700;">0 階</b></div>
           <div>⚠️ 插槽浪費：<b id="scWasteTiers" style="color:#e74c3c;">0 階</b></div>
         </div>
         <div style="font-size:0.72rem; color:var(--text-dim); margin-top:6px; border-top:1px dashed var(--border-color); padding-top:4px;">
-          ⭐ 優先主力滿階：<b id="scPrioMax" style="color:#ffd700;">0/0</b>
+          ⭐ 優先主力滿階：<b id="scPrioMax" style="color:#ffd700;">未設定</b>
         </div>
       </div>
 
@@ -1029,11 +1029,17 @@
         badgeEl.style.color = "#000";
       }
 
-      document.getElementById('scEffRatio').innerText = `${evalObj.effRatioScore}/40`;
-      document.getElementById('scSynRatio').innerText = `${evalObj.synScore}/40`;
-      document.getElementById('scSlotRatio').innerText = `${evalObj.slotUtilScore}/20`;
+      // 將原本寫死的比例分數替換為 Metrics 的實際數字
+      document.getElementById('scEffRatio').innerText = `${metrics.totalEffectiveTiers}/${metrics.potentialTierCapacity}`;
+      document.getElementById('scSynRatio').innerText = `${metrics.currentTotalLv}/${metrics.maxTotalLv}`;
+      document.getElementById('scTierOverflow').innerText = `${metrics.tierOverflow} 階`;
       document.getElementById('scWasteTiers').innerText = `${metrics.slotWaste} 階`;
-      document.getElementById('scPrioMax').innerText = `${metrics.priorityMaxedCount}/${metrics.totalPriorityCount}`;
+      
+      if (metrics.totalPriorityCount > 0) {
+          document.getElementById('scPrioMax').innerText = `${metrics.priorityMaxedCount}/${metrics.totalPriorityCount}`;
+      } else {
+          document.getElementById('scPrioMax').innerText = `未設定`;
+      }
     }
 
     function unlockAllGrid() {
@@ -1191,6 +1197,11 @@
       let totalEffectiveTiers = 0;
       let totalSlotProvidedTiers = 0;
 
+      // 這次新增的區域變數 (僅用來收集與整理新狀態顯示資料，不影響現有演算法依賴)
+      let tierOverflow = 0;
+      let potentialTierCapacity = 0;
+      const catPartCounts = { A: 0, B: 0, C: 0, D: 0 };
+
       for (let i = 0; i < 25; i++) {
         const p = board[i];
         if (p) {
@@ -1213,7 +1224,13 @@
             const maxT = info.maxT[p.rarityIdx || 0];
             const currentT = tiers[i];
             const eff = Math.min(currentT, maxT);
+            
             totalEffectiveTiers += eff;
+            
+            // 累加新資料：階段潛力、溢出、各類別零件總數
+            potentialTierCapacity += maxT;
+            tierOverflow += Math.max(0, currentT - maxT);
+            catPartCounts[info.cat]++;
 
             if (currentT >= maxT && maxT > 0) {
               maxedCounts[info.cat]++;
@@ -1260,6 +1277,16 @@
         }
       }
 
+      // 新增邏輯：依照盤面實際存在的零件數轉換為「連線等級 LV」
+      let currentTotalLv = 0;
+      let maxTotalLv = 0;
+      ['A', 'B', 'C', 'D'].forEach(cat => {
+        if (catPartCounts[cat] > 0) {
+          maxTotalLv += Math.max(0, catPartCounts[cat] - 1);
+          currentTotalLv += Math.max(0, connectedCounts[cat] - 1);
+        }
+      });
+
       return { 
         tiers, 
         connectedCounts, 
@@ -1268,7 +1295,13 @@
         totalPriorityCount, 
         totalEffectiveTiers, 
         totalSlotProvidedTiers, 
-        slotWaste 
+        slotWaste,
+        
+        // 新增的輸出資料 (提供給 updateScoreBoard 讀取，不改變舊有屬性結構)
+        tierOverflow,
+        potentialTierCapacity,
+        currentTotalLv,
+        maxTotalLv
       };
     }
 
