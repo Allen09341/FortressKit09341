@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow, noarchive">
-  <title>FortressKit｜零件配置編輯器 v0.5</title>
+  <title>FortressKit｜零件配置編輯器 v0.5.1</title>
   <style>
     :root {
       --bg-main: #141619;
@@ -298,7 +298,7 @@
   <!-- Header -->
   <header>
     <div class="title-group">
-      <h1>FortressKit｜零件配置編輯器 <span class="version-tag" id="appVersionBadge">v0.5</span></h1>
+      <h1>FortressKit｜零件配置編輯器 <span class="version-tag" id="appVersionBadge">v0.5.1</span></h1>
       <p>解鎖格子・配置零件・調整階段・連線增幅・一鍵最佳化</p>
     </div>
     <div class="header-actions">
@@ -393,11 +393,11 @@
           <div class="score-bar-val" id="scoreBarFill"></div>
         </div>
         <div class="score-subgrid">
-          <div>📈 有效階段：<b id="scEffRatio" style="color:#2ecc71;">0/0</b></div>
-          <div>🔗 連線等級：<b id="scSynRatio" style="color:#58a6ff;">0/0</b></div>
-          <div>⚠️ 階段溢出：<b id="scTierOverflow" style="color:#ffd700;">0 階</b></div>
-          <div>⚠️ 插槽浪費：<b id="scWasteTiers" style="color:#e74c3c;">0 階</b></div>
-          <div id="invalidSlotWrapper" style="display: none; grid-column: span 2;">❌ 無效插槽：<b id="scInvalidSlots" style="color:#ff4d4f;">0</b></div>
+          <div>📈 有效階段：<b id="scEffRatio" style="color:var(--color-green);">0/0</b></div>
+          <div>🔗 連線等級：<b id="scSynRatio" style="color:var(--color-green);">0/0</b></div>
+          <div>⚠️ 階段溢出：<b id="scTierOverflow" style="color:var(--color-green);">0 階</b></div>
+          <div>⚠️ 插槽浪費：<b id="scWasteTiers" style="color:var(--color-green);">0 階</b></div>
+          <div id="invalidSlotWrapper" style="display: none; grid-column: span 2;">❌ 無效插槽：<b id="scInvalidSlots" style="color:var(--color-deb);">0</b></div>
         </div>
         <div style="font-size:0.72rem; color:var(--text-dim); margin-top:6px; border-top:1px dashed var(--border-color); padding-top:4px;">
           ⭐ 優先主力滿階：<b id="scPrioMax" style="color:#ffd700;">未設定</b>
@@ -415,8 +415,8 @@
 
   <script>
     // --- Centralized Version Management ---
-    const APP_VERSION = 'v0.5';
-    const APP_VERSION_RAW = '0.5';
+    const APP_VERSION = 'v0.5.1';
+    const APP_VERSION_RAW = '0.5.1';
 
     // Global variable for slot preview drag center
     window.currentHighlightCenter = null;
@@ -1054,24 +1054,45 @@
         badgeEl.style.color = "#000";
       }
 
-      document.getElementById('scEffRatio').innerText = `${metrics.totalEffectiveTiers}/${metrics.potentialTierCapacity}`;
-      document.getElementById('scSynRatio').innerText = `${metrics.currentTotalLv}/${metrics.maxTotalLv}`;
-      document.getElementById('scTierOverflow').innerText = `${metrics.tierOverflow} 階`;
-      document.getElementById('scWasteTiers').innerText = `${metrics.slotWaste} 階`;
+      // 1. 有效階段：綠色
+      const effEl = document.getElementById('scEffRatio');
+      effEl.innerText = `${metrics.totalEffectiveTiers}/${metrics.potentialTierCapacity}`;
+      effEl.style.color = "var(--color-green)";
 
+      // 2. 連線等級：同款綠色
+      const synEl = document.getElementById('scSynRatio');
+      synEl.innerText = `${metrics.currentTotalLv}/${metrics.maxTotalLv}`;
+      synEl.style.color = "var(--color-green)";
+
+      // 3. 階段溢出：=0 綠色，>0 橙色
+      const overflowEl = document.getElementById('scTierOverflow');
+      overflowEl.innerText = `${metrics.tierOverflow} 階`;
+      overflowEl.style.color = metrics.tierOverflow === 0 ? "var(--color-green)" : "var(--color-atk)";
+
+      // 4. 插槽浪費：=0 綠色，>0 橙色
+      const wasteEl = document.getElementById('scWasteTiers');
+      wasteEl.innerText = `${metrics.slotWaste} 階`;
+      wasteEl.style.color = metrics.slotWaste === 0 ? "var(--color-green)" : "var(--color-atk)";
+
+      // 5. 無效插槽：=0 隱藏，>0 紅色
       const invalidSlotWrapper = document.getElementById('invalidSlotWrapper');
+      const invalidEl = document.getElementById('scInvalidSlots');
       if (metrics.invalidSlotCount > 0) {
         invalidSlotWrapper.style.display = 'block';
-        document.getElementById('scInvalidSlots').innerText = metrics.invalidSlotCount;
+        invalidEl.innerText = metrics.invalidSlotCount;
+        invalidEl.style.color = "var(--color-deb)";
       } else {
         invalidSlotWrapper.style.display = 'none';
       }
 
+      // 6. 優先主力滿階：維持黃色
+      const prioEl = document.getElementById('scPrioMax');
       if (metrics.totalPriorityCount > 0) {
-          document.getElementById('scPrioMax').innerText = `${metrics.priorityMaxedCount}/${metrics.totalPriorityCount}`;
+          prioEl.innerText = `${metrics.priorityMaxedCount}/${metrics.totalPriorityCount}`;
       } else {
-          document.getElementById('scPrioMax').innerText = `未設定`;
+          prioEl.innerText = `未設定`;
       }
+      prioEl.style.color = "#ffd700";
     }
 
     function unlockAllGrid() {
