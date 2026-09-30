@@ -160,7 +160,10 @@
 
     .cell-part-tier { position: absolute; top: 3px; left: 4px; font-size: 0.72rem; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.9); line-height: 1; z-index: 2; pointer-events: none; }
     .cell-part-pin { position: absolute; top: 2px; right: 2px; font-size: 0.75rem; z-index: 3; pointer-events: none; }
-    .cell-part-star { position: absolute; top: 2px; right: 18px; font-size: 0.75rem; color: #ffd700; z-index: 3; pointer-events: none; text-shadow: 0 0 4px #000; }
+    /* ⭐ 優先主力圖示改為放置於階段數值正下方 */
+    .cell-part-star { position: absolute; top: 16px; left: 4px; font-size: 0.72rem; color: #ffd700; z-index: 3; pointer-events: none; text-shadow: 0 0 4px #000; line-height: 1; }
+    /* 插槽稀有度徽章：位於盤面插槽左上角 */
+    .cell-part-slot-rarity { position: absolute; top: 3px; left: 4px; font-size: 0.6rem; padding: 0px 3px; border-radius: 3px; font-weight: 700; z-index: 2; pointer-events: none; line-height: 1.2; }
 
     /* Grid Sub-Controls & Hint */
     .board-hint-box { font-size: 0.76rem; color: var(--text-dim); margin-top: 10px; text-align: center; line-height: 1.4; background: rgba(255,255,255,0.03); padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); width: 100%; letter-spacing: 0.3px; }
@@ -383,7 +386,7 @@
         <div class="score-main-row">
           <div>
             <span style="font-size:0.85rem; font-weight:700; color:#fff;">🏆 盤面實際評分</span>
-            <span id="scoreTierBadge" class="score-tier-badge" style="background:#ffd700; color:#000; margin-left:4px;">SSS</span>
+            <span id="scoreTierBadge" class="score-tier-badge" style="background:#ffd700; color:#000; margin-left:4px;">S</span>
           </div>
           <span class="score-points" id="scoreValue">0.0 分</span>
         </div>
@@ -395,6 +398,7 @@
           <div>🔗 連線等級：<b id="scSynRatio" style="color:#58a6ff;">0/0</b></div>
           <div>⚠️ 階段溢出：<b id="scTierOverflow" style="color:#ffd700;">0 階</b></div>
           <div>⚠️ 插槽浪費：<b id="scWasteTiers" style="color:#e74c3c;">0 階</b></div>
+          <div id="invalidSlotWrapper" style="display: none; grid-column: span 2;">❌ 無效插槽：<b id="scInvalidSlots" style="color:#ff4d4f;">0</b></div>
         </div>
         <div style="font-size:0.72rem; color:var(--text-dim); margin-top:6px; border-top:1px dashed var(--border-color); padding-top:4px;">
           ⭐ 優先主力滿階：<b id="scPrioMax" style="color:#ffd700;">未設定</b>
@@ -411,6 +415,9 @@
   </div>
 
   <script>
+    // Global variable for slot preview drag center
+    window.currentHighlightCenter = null;
+
     // --- Pointer Events Touch Drag State & Logic ---
     let pointerDragState = {
       isPointerDown: false,
@@ -711,7 +718,13 @@
 
     function setupGlobalDragDrop() {
       const libDropZone = document.getElementById('libraryDropZone');
-      libDropZone.ondragover = (e) => { e.preventDefault(); };
+      libDropZone.ondragover = (e) => { 
+        e.preventDefault(); 
+        if (window.currentHighlightCenter !== null) {
+            clearHighlight();
+            window.currentHighlightCenter = null;
+        }
+      };
       libDropZone.ondrop = (e) => {
         e.preventDefault();
         if (window.currentDragState && window.currentDragState.type === 'GRID') {
@@ -754,11 +767,18 @@
 
         item.ondragend = () => {
           window.currentDragState = null;
+          window.currentHighlightCenter = null;
           clearDragHovers();
+          clearHighlight();
         };
 
-        // 點擊行為維持不變：未放置則放入第一空位；已放置則從盤面移除
+        // NEW: 零件庫單擊只看資訊，雙擊才修改盤面
         item.onclick = (e) => {
+          if (e.target.classList.contains('priority-star-btn')) return;
+          showInspector(p.id);
+        };
+
+        item.ondblclick = (e) => {
           if (e.target.classList.contains('priority-star-btn')) return;
           if (!isPlaced) {
             placePartDirectly(p.id);
@@ -849,8 +869,7 @@
 
           cell.ondragover = (e) => {
             e.preventDefault();
-            // 變更點：移除原本寫死的 dropEffect='move'
-            // 並加入 Pin 防護游標提示
+            // 變更點：移除原本寫死的 dropEffect='move' 並加入 Pin 防護游標提示
             if (boardParts[i] && boardParts[i].pinned) {
                 e.dataTransfer.dropEffect = 'none';
                 cell.classList.add('drag-target-pinned');
@@ -862,6 +881,17 @@
                 }
                 cell.classList.add('drag-target-hover');
             }
+
+            // NEW: 插槽即時拖曳預覽
+            if (window.currentDragState && window.currentDragState.id) {
+                const dragPart = PARTS_DATA.find(x => x.id === window.currentDragState.id);
+                if (dragPart && dragPart.cat === 'E') {
+                    if (window.currentHighlightCenter !== i) {
+                        highlightSlotRange(i, dragPart);
+                        window.currentHighlightCenter = i;
+                    }
+                }
+            }
           };
           cell.ondragleave = () => {
             cell.classList.remove('drag-target-hover');
@@ -871,6 +901,8 @@
             e.preventDefault();
             cell.classList.remove('drag-target-hover');
             cell.classList.remove('drag-target-pinned');
+            window.currentHighlightCenter = null;
+            clearHighlight();
             handleDropOnCell(e, i);
           };
 
@@ -896,7 +928,9 @@
 
             partEl.ondragend = () => {
               window.currentDragState = null;
+              window.currentHighlightCenter = null;
               clearDragHovers();
+              clearHighlight();
             };
 
             partEl.onpointerdown = (e) => {
@@ -917,10 +951,20 @@
             const pinHtml = pData.pinned ? `<span class="cell-part-pin">📌</span>` : '';
             const starHtml = pData.isPriority ? `<span class="cell-part-star">★</span>` : '';
 
+            // 插槽稀有度徽章（僅類別 E）
+            let slotRarityHtml = '';
+            if (partInfo.cat === 'E') {
+              if (partInfo.rarity === '傳說') {
+                slotRarityHtml = `<span class="cell-part-slot-rarity badge-legend">傳說</span>`;
+              } else if (partInfo.rarity === '獨特') {
+                slotRarityHtml = `<span class="cell-part-slot-rarity badge-unique">獨特</span>`;
+              }
+            }
+
             partEl.innerHTML = `
-              ${partInfo.cat !== 'E' ? `<div class="cell-part-tier ${tierClass}">${currentTier}/${maxTier}</div>` : ''}
-              ${pinHtml}
+              ${partInfo.cat !== 'E' ? `<div class="cell-part-tier ${tierClass}">${currentTier}/${maxTier}</div>` : slotRarityHtml}
               ${starHtml}
+              ${pinHtml}
               <img class="cell-part-img" draggable="false" src="${partInfo.id}_${partInfo.name}.png" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('afterbegin','<b style=\\'font-size:1.05rem\\'>${partInfo.id}</b>')" alt="">
               <div class="cell-part-name cat-${partInfo.cat}">${partInfo.name}</div>
             `;
@@ -956,47 +1000,40 @@
 
     // Objective Player Board Evaluation
     function evaluatePlayerScore(metrics) {
-        let potentialTierCapacity = 0;
-        let synergyWeightedTiers = 0;
-        const categoryEffectiveTiers = { A: 0, B: 0, C: 0, D: 0 };
-
-        for (let i = 0; i < 25; i++) {
-            const p = boardParts[i];
-            if (p) {
-                const info = PARTS_DATA.find(x => x.id === p.id);
-                if (['A', 'B', 'C', 'D'].includes(info.cat)) {
-                    const maxT = info.maxT[p.rarityIdx || 0];
-                    potentialTierCapacity += maxT;
-
-                    const currentTier = metrics.tiers[i] || 0;
-                    const effectiveTier = Math.min(currentTier, maxT);
-                    categoryEffectiveTiers[info.cat] += effectiveTier;
-                }
-            }
+        // 1. 連線等級 (最大 40 分)
+        let connectionScore = 0;
+        if (metrics.maxTotalLv > 0) {
+            connectionScore = (metrics.currentTotalLv / metrics.maxTotalLv) * 40;
         }
 
-        const effRatioScore = (potentialTierCapacity > 0) ? (metrics.totalEffectiveTiers / potentialTierCapacity) * 40 : 0;
+        // 2. 有效階段 (最大 30 分)
+        let effectiveTierScore = 0;
+        if (metrics.potentialTierCapacity > 0) {
+            let effectiveTierRatio = metrics.totalEffectiveTiers / metrics.potentialTierCapacity;
+            effectiveTierRatio = Math.max(0, Math.min(1, effectiveTierRatio));
+            effectiveTierScore = Math.sqrt(effectiveTierRatio) * 30;
+        }
 
-        ['A', 'B', 'C', 'D'].forEach(cat => {
-            const conn = metrics.connectedCounts[cat] || 0;
-            const bonusPct = conn >= 2 ? (Math.min(6, conn - 1) * 0.20) : 0;
-            synergyWeightedTiers += bonusPct * categoryEffectiveTiers[cat];
-        });
+        // 3. 插槽利用率 (最大 30 分)
+        let slotScore = 0;
+        if (metrics.totalSlotProvidedTiers > 0) {
+            let slotEfficiency = metrics.totalEffectiveTiers / metrics.totalSlotProvidedTiers;
+            slotEfficiency = Math.max(0, Math.min(1, slotEfficiency));
+            slotScore = Math.sqrt(slotEfficiency) * 30;
+        }
 
-        const synScore = (potentialTierCapacity > 0) ? (synergyWeightedTiers / (1.2 * potentialTierCapacity)) * 40 : 0;
-        const slotUtilScore = (metrics.totalSlotProvidedTiers > 0) ? (metrics.totalEffectiveTiers / metrics.totalSlotProvidedTiers) * 20 : 0;
+        // 4. 階段溢出扣分
+        let overflowPenalty = metrics.tierOverflow * 1;
 
-        const finalEffRatioScore = Math.min(40, effRatioScore);
-        const finalSynScore = Math.min(40, synScore);
-        const finalSlotUtilScore = Math.min(20, slotUtilScore);
+        // 5. 無效插槽扣分
+        let invalidSlotPenalty = metrics.invalidSlotCount * 5;
 
-        const totalScore = finalEffRatioScore + finalSynScore + finalSlotUtilScore;
+        // 總分計算與限制 (0 ~ 100)
+        let rawTotal = connectionScore + effectiveTierScore + slotScore - overflowPenalty - invalidSlotPenalty;
+        let totalScore = Math.max(0, Math.min(100, rawTotal));
 
         return {
-            totalScore: Math.round(totalScore * 10) / 10,
-            effRatioScore: Math.round(finalEffRatioScore * 10) / 10,
-            synScore: Math.round(finalSynScore * 10) / 10,
-            slotUtilScore: Math.round(finalSlotUtilScore * 10) / 10,
+            totalScore: Math.round(totalScore * 10) / 10
         };
     }
 
@@ -1012,19 +1049,19 @@
       fillEl.style.width = `${Math.min(100, evalObj.totalScore)}%`;
 
       if (evalObj.totalScore >= 90) {
-        badgeEl.innerText = "SSS 頂級";
+        badgeEl.innerText = "S";
         badgeEl.style.background = "#ffd700";
         badgeEl.style.color = "#000";
       } else if (evalObj.totalScore >= 75) {
-        badgeEl.innerText = "S 卓越";
+        badgeEl.innerText = "A";
         badgeEl.style.background = "#58a6ff";
         badgeEl.style.color = "#000";
       } else if (evalObj.totalScore >= 60) {
-        badgeEl.innerText = "A 良好";
+        badgeEl.innerText = "B";
         badgeEl.style.background = "#2ecc71";
         badgeEl.style.color = "#000";
       } else {
-        badgeEl.innerText = "B 普通";
+        badgeEl.innerText = "C";
         badgeEl.style.background = "#8b949e";
         badgeEl.style.color = "#000";
       }
@@ -1034,7 +1071,16 @@
       document.getElementById('scSynRatio').innerText = `${metrics.currentTotalLv}/${metrics.maxTotalLv}`;
       document.getElementById('scTierOverflow').innerText = `${metrics.tierOverflow} 階`;
       document.getElementById('scWasteTiers').innerText = `${metrics.slotWaste} 階`;
-      
+
+      // NEW: 無效插槽顯示邏輯
+      const invalidSlotWrapper = document.getElementById('invalidSlotWrapper');
+      if (metrics.invalidSlotCount > 0) {
+        invalidSlotWrapper.style.display = 'block';
+        document.getElementById('scInvalidSlots').innerText = metrics.invalidSlotCount;
+      } else {
+        invalidSlotWrapper.style.display = 'none';
+      }
+
       if (metrics.totalPriorityCount > 0) {
           document.getElementById('scPrioMax').innerText = `${metrics.priorityMaxedCount}/${metrics.totalPriorityCount}`;
       } else {
@@ -1197,9 +1243,10 @@
       let totalEffectiveTiers = 0;
       let totalSlotProvidedTiers = 0;
 
-      // 這次新增的區域變數 (僅用來收集與整理新狀態顯示資料，不影響現有演算法依賴)
+      // 區域變數 (僅用來收集與整理新狀態顯示資料，不影響現有演算法依賴)
       let tierOverflow = 0;
       let potentialTierCapacity = 0;
+      let invalidSlotCount = 0;
       const catPartCounts = { A: 0, B: 0, C: 0, D: 0 };
 
       for (let i = 0; i < 25; i++) {
@@ -1212,6 +1259,22 @@
             targets.forEach(tIdx => {
               tiers[tIdx] += info.boost;
             });
+
+            // 無效插槽判定
+            let hasValidTarget = false;
+            for (let tIdx of targets) {
+              const tPart = board[tIdx];
+              if (tPart) {
+                const tInfo = PARTS_DATA.find(x => x.id === tPart.id);
+                if (['A', 'B', 'C', 'D'].includes(tInfo.cat)) {
+                  hasValidTarget = true;
+                  break;
+                }
+              }
+            }
+            if (!hasValidTarget) {
+              invalidSlotCount++;
+            }
           }
         }
       }
@@ -1224,9 +1287,9 @@
             const maxT = info.maxT[p.rarityIdx || 0];
             const currentT = tiers[i];
             const eff = Math.min(currentT, maxT);
-            
+
             totalEffectiveTiers += eff;
-            
+
             // 累加新資料：階段潛力、溢出、各類別零件總數
             potentialTierCapacity += maxT;
             tierOverflow += Math.max(0, currentT - maxT);
@@ -1277,7 +1340,7 @@
         }
       }
 
-      // 新增邏輯：依照盤面實際存在的零件數轉換為「連線等級 LV」
+      // 依照盤面實際存在的零件數轉換為「連線等級 LV」
       let currentTotalLv = 0;
       let maxTotalLv = 0;
       ['A', 'B', 'C', 'D'].forEach(cat => {
@@ -1296,12 +1359,11 @@
         totalEffectiveTiers, 
         totalSlotProvidedTiers, 
         slotWaste,
-        
-        // 新增的輸出資料 (提供給 updateScoreBoard 讀取，不改變舊有屬性結構)
         tierOverflow,
         potentialTierCapacity,
         currentTotalLv,
-        maxTotalLv
+        maxTotalLv,
+        invalidSlotCount
       };
     }
 
@@ -1495,6 +1557,7 @@
           if (overallBestBoard && hardConstraintsSatisfied) {
             boardParts = overallBestBoard;
             renderGrid();
+            renderLibrary();
             showToast("⚡ FortressKit 最佳化完成！可直接拖曳零件微調。", "success");
           } else {
             let failReasons = [];
