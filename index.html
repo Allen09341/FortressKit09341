@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow">
-  <title>FortressKit｜零件配置編輯器</title>
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>FortressKit｜零件配置編輯器 v0.5</title>
   <style>
     :root {
       --bg-main: #141619;
@@ -42,7 +42,8 @@
 
     /* Header */
     header { background-color: var(--bg-panel); border-bottom: 1px solid var(--border-color); padding: 10px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; flex-shrink: 0; position: sticky; top: 0; z-index: 100; }
-    .title-group h1 { color: var(--accent-title); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; }
+    .title-group h1 { color: var(--accent-title); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
+    .version-tag { font-size: 0.75rem; background: rgba(88, 166, 255, 0.15); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3); border-radius: 4px; padding: 1px 6px; font-weight: 600; }
     .title-group p { color: var(--text-dim); font-size: 0.75rem; margin-top: 2px; }
     .header-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-start; }
     .btn { background: #30363d; color: #fff; border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
@@ -160,9 +161,7 @@
 
     .cell-part-tier { position: absolute; top: 3px; left: 4px; font-size: 0.72rem; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.9); line-height: 1; z-index: 2; pointer-events: none; }
     .cell-part-pin { position: absolute; top: 2px; right: 2px; font-size: 0.75rem; z-index: 3; pointer-events: none; }
-    /* ⭐ 優先主力圖示改為放置於階段數值正下方 */
     .cell-part-star { position: absolute; top: 16px; left: 4px; font-size: 0.72rem; color: #ffd700; z-index: 3; pointer-events: none; text-shadow: 0 0 4px #000; line-height: 1; }
-    /* 插槽稀有度徽章：位於盤面插槽左上角 */
     .cell-part-slot-rarity { position: absolute; top: 3px; left: 4px; font-size: 0.6rem; padding: 0px 3px; border-radius: 3px; font-weight: 700; z-index: 2; pointer-events: none; line-height: 1.2; }
 
     /* Grid Sub-Controls & Hint */
@@ -237,7 +236,7 @@
     .progress-percent-label { font-size: 0.82rem; font-weight: 700; color: #58a6ff; }
 
     /* Slot Inventory Modal */
-    .slot-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 999; }
+    .slot-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 9999; }
     .slot-modal-card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px; width: 480px; max-width: 92vw; max-height: 82vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
     .slot-grid-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 12px 0; }
 
@@ -299,7 +298,7 @@
   <!-- Header -->
   <header>
     <div class="title-group">
-      <h1>FortressKit｜零件配置編輯器</h1>
+      <h1>FortressKit｜零件配置編輯器 <span class="version-tag" id="appVersionBadge">v0.5</span></h1>
       <p>解鎖格子・配置零件・調整階段・連線增幅・一鍵最佳化</p>
     </div>
     <div class="header-actions">
@@ -415,6 +414,10 @@
   </div>
 
   <script>
+    // --- Centralized Version Management ---
+    const APP_VERSION = 'v0.5';
+    const APP_VERSION_RAW = '0.5';
+
     // Global variable for slot preview drag center
     window.currentHighlightCenter = null;
 
@@ -598,6 +601,7 @@
     window.currentDragState = null;
 
     window.onload = () => {
+      document.getElementById('appVersionBadge').innerText = APP_VERSION;
       renderLibrary();
       renderGrid();
       refreshAllSelectVisuals();
@@ -671,7 +675,6 @@
         const item = document.createElement('div');
         item.className = `slot-chk-item ${isChecked ? 'checked' : ''}`;
 
-        // 統一把點擊事件綁在卡片容器上，避免雙重觸發或無效點擊
         item.onclick = (e) => {
           e.preventDefault();
           const chk = item.querySelector('input[type="checkbox"]');
@@ -683,7 +686,7 @@
 
         item.innerHTML = `
           <input type="checkbox" ${isChecked ? 'checked' : ''} style="pointer-events: none;">
-          <img src="${s.id}_${s.name}.png" class="slot-item-icon" draggable="false" style="pointer-events: none;" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\\'slot-item-icon\\'></div>'); this.remove();">
+          <img src="${s.id}_${s.name}.png?v=${APP_VERSION_RAW}" class="slot-item-icon" draggable="false" style="pointer-events: none;" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\\'slot-item-icon\\'></div>'); this.remove();">
           <div class="slot-item-info">
             <div class="slot-item-name">${s.name}</div>
             <div class="slot-item-meta">
@@ -750,7 +753,6 @@
         const item = document.createElement('div');
         item.className = `part-item accent-${p.cat} ${isPlaced ? 'placed' : ''}`;
 
-        // 變更點：解禁拖曳限制。所有零件庫零件（不論是否 placed）都可以進行拖曳。
         item.setAttribute('draggable', 'true');
         item.style.touchAction = 'none';
 
@@ -761,7 +763,6 @@
         item.ondragstart = (e) => {
           window.currentDragState = { type: 'LIB', id: p.id };
           e.dataTransfer.setData('text/plain', JSON.stringify(window.currentDragState));
-          // 修正 HTML5 拖曳限制：同時允許 Copy 與 Move
           e.dataTransfer.effectAllowed = 'copyMove';
         };
 
@@ -772,7 +773,6 @@
           clearHighlight();
         };
 
-        // NEW: 零件庫單擊只看資訊，雙擊才修改盤面
         item.onclick = (e) => {
           if (e.target.classList.contains('priority-star-btn')) return;
           showInspector(p.id);
@@ -811,7 +811,7 @@
 
         item.innerHTML = `
           <div class="part-item-icon">
-            <img src="${p.id}_${p.name}.png" draggable="false" onerror="this.style.display='none';this.parentElement.innerText='${p.id}'" alt="${p.name}">
+            <img src="${p.id}_${p.name}.png?v=${APP_VERSION_RAW}" draggable="false" onerror="this.style.display='none';this.parentElement.innerText='${p.id}'" alt="${p.name}">
           </div>
           <div class="part-item-info">
             <div class="part-item-header">
@@ -869,7 +869,6 @@
 
           cell.ondragover = (e) => {
             e.preventDefault();
-            // 變更點：移除原本寫死的 dropEffect='move' 並加入 Pin 防護游標提示
             if (boardParts[i] && boardParts[i].pinned) {
                 e.dataTransfer.dropEffect = 'none';
                 cell.classList.add('drag-target-pinned');
@@ -882,7 +881,6 @@
                 cell.classList.add('drag-target-hover');
             }
 
-            // NEW: 插槽即時拖曳預覽
             if (window.currentDragState && window.currentDragState.id) {
                 const dragPart = PARTS_DATA.find(x => x.id === window.currentDragState.id);
                 if (dragPart && dragPart.cat === 'E') {
@@ -915,7 +913,6 @@
             partEl.style.touchAction = 'none';
 
             partEl.ondragstart = (e) => {
-              // 變更點：如果來源零件已 Pin，不允許拖走
               if (pData.pinned) {
                 e.preventDefault();
                 showToast("📌 此零件已釘選，無法拖曳", "normal");
@@ -934,7 +931,6 @@
             };
 
             partEl.onpointerdown = (e) => {
-              // 防護 pointer events 的拖曳啟動
               if (pData.pinned) return;
               handlePointerDown(e, pData, 'GRID', i);
             };
@@ -951,7 +947,6 @@
             const pinHtml = pData.pinned ? `<span class="cell-part-pin">📌</span>` : '';
             const starHtml = pData.isPriority ? `<span class="cell-part-star">★</span>` : '';
 
-            // 插槽稀有度徽章（僅類別 E）
             let slotRarityHtml = '';
             if (partInfo.cat === 'E') {
               if (partInfo.rarity === '傳說') {
@@ -965,7 +960,7 @@
               ${partInfo.cat !== 'E' ? `<div class="cell-part-tier ${tierClass}">${currentTier}/${maxTier}</div>` : slotRarityHtml}
               ${starHtml}
               ${pinHtml}
-              <img class="cell-part-img" draggable="false" src="${partInfo.id}_${partInfo.name}.png" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('afterbegin','<b style=\\'font-size:1.05rem\\'>${partInfo.id}</b>')" alt="">
+              <img class="cell-part-img" draggable="false" src="${partInfo.id}_${partInfo.name}.png?v=${APP_VERSION_RAW}" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('afterbegin','<b style=\\'font-size:1.05rem\\'>${partInfo.id}</b>')" alt="">
               <div class="cell-part-name cat-${partInfo.cat}">${partInfo.name}</div>
             `;
             cell.appendChild(partEl);
@@ -1000,13 +995,11 @@
 
     // Objective Player Board Evaluation
     function evaluatePlayerScore(metrics) {
-        // 1. 連線等級 (最大 40 分)
         let connectionScore = 0;
         if (metrics.maxTotalLv > 0) {
             connectionScore = (metrics.currentTotalLv / metrics.maxTotalLv) * 40;
         }
 
-        // 2. 有效階段 (最大 30 分)
         let effectiveTierScore = 0;
         if (metrics.potentialTierCapacity > 0) {
             let effectiveTierRatio = metrics.totalEffectiveTiers / metrics.potentialTierCapacity;
@@ -1014,7 +1007,6 @@
             effectiveTierScore = Math.sqrt(effectiveTierRatio) * 30;
         }
 
-        // 3. 插槽利用率 (最大 30 分)
         let slotScore = 0;
         if (metrics.totalSlotProvidedTiers > 0) {
             let slotEfficiency = metrics.totalEffectiveTiers / metrics.totalSlotProvidedTiers;
@@ -1022,13 +1014,9 @@
             slotScore = Math.sqrt(slotEfficiency) * 30;
         }
 
-        // 4. 階段溢出扣分
         let overflowPenalty = metrics.tierOverflow * 1;
-
-        // 5. 無效插槽扣分
         let invalidSlotPenalty = metrics.invalidSlotCount * 5;
 
-        // 總分計算與限制 (0 ~ 100)
         let rawTotal = connectionScore + effectiveTierScore + slotScore - overflowPenalty - invalidSlotPenalty;
         let totalScore = Math.max(0, Math.min(100, rawTotal));
 
@@ -1066,13 +1054,11 @@
         badgeEl.style.color = "#000";
       }
 
-      // 將原本寫死的比例分數替換為 Metrics 的實際數字
       document.getElementById('scEffRatio').innerText = `${metrics.totalEffectiveTiers}/${metrics.potentialTierCapacity}`;
       document.getElementById('scSynRatio').innerText = `${metrics.currentTotalLv}/${metrics.maxTotalLv}`;
       document.getElementById('scTierOverflow').innerText = `${metrics.tierOverflow} 階`;
       document.getElementById('scWasteTiers').innerText = `${metrics.slotWaste} 階`;
 
-      // NEW: 無效插槽顯示邏輯
       const invalidSlotWrapper = document.getElementById('invalidSlotWrapper');
       if (metrics.invalidSlotCount > 0) {
         invalidSlotWrapper.style.display = 'block';
@@ -1105,13 +1091,11 @@
 
       if (!dragData) return;
 
-      // 共通阻擋 1：目標未解鎖
       if (!unlockedGrid[targetIdx]) {
         showToast("⚠️ 此格子未解鎖！", "normal");
         return;
       }
 
-      // 共通阻擋 2：目標已有零件且已 Pin
       if (boardParts[targetIdx] && boardParts[targetIdx].pinned) {
         const cell = document.querySelector(`.cell[data-index='${targetIdx}']`);
         if (cell) {
@@ -1123,22 +1107,17 @@
       }
 
       if (dragData.type === 'LIB') {
-        // LIB -> GRID：覆蓋與重新指派邏輯
         const isPrio = priorityPartIds.has(dragData.id);
         const existingIdx = boardParts.findIndex(p => p && p.id === dragData.id);
 
-        // 賦予預設值 (rarityIdx重置為0、解除Pin)，直接覆蓋目標格
         boardParts[targetIdx] = { id: dragData.id, rarityIdx: 0, pinned: false, isPriority: isPrio };
 
-        // 維持零件唯一性：如果盤面上其他地方原本有這個零件，將其清除（舊實例消滅）
         if (existingIdx !== -1 && existingIdx !== targetIdx) {
           boardParts[existingIdx] = null;
         }
       } else if (dragData.type === 'GRID') {
-        // GRID -> GRID：交換位置邏輯
         const fromIdx = dragData.fromIndex;
         if (fromIdx !== targetIdx) {
-          // 直接交換參考，保留 100% 原始狀態（rarityIdx、pinned、isPriority）
           const temp = boardParts[targetIdx];
           boardParts[targetIdx] = boardParts[fromIdx];
           boardParts[fromIdx] = temp;
@@ -1243,7 +1222,6 @@
       let totalEffectiveTiers = 0;
       let totalSlotProvidedTiers = 0;
 
-      // 區域變數 (僅用來收集與整理新狀態顯示資料，不影響現有演算法依賴)
       let tierOverflow = 0;
       let potentialTierCapacity = 0;
       let invalidSlotCount = 0;
@@ -1260,7 +1238,6 @@
               tiers[tIdx] += info.boost;
             });
 
-            // 無效插槽判定
             let hasValidTarget = false;
             for (let tIdx of targets) {
               const tPart = board[tIdx];
@@ -1290,7 +1267,6 @@
 
             totalEffectiveTiers += eff;
 
-            // 累加新資料：階段潛力、溢出、各類別零件總數
             potentialTierCapacity += maxT;
             tierOverflow += Math.max(0, currentT - maxT);
             catPartCounts[info.cat]++;
@@ -1340,7 +1316,6 @@
         }
       }
 
-      // 依照盤面實際存在的零件數轉換為「連線等級 LV」
       let currentTotalLv = 0;
       let maxTotalLv = 0;
       ['A', 'B', 'C', 'D'].forEach(cat => {
@@ -1431,7 +1406,7 @@
         <div class="inspector-card">
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
             <div class="part-item-icon" style="width:48px; height:48px;">
-              <img src="${p.id}_${p.name}.png" draggable="false" onerror="this.style.display='none';this.parentElement.innerText='${p.id}'" alt="">
+              <img src="${p.id}_${p.name}.png?v=${APP_VERSION_RAW}" draggable="false" onerror="this.style.display='none';this.parentElement.innerText='${p.id}'" alt="">
             </div>
             <div>
               <div style="font-size:1rem; font-weight:bold; color:#fff;">${p.name}</div>
